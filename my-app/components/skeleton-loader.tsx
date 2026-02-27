@@ -73,6 +73,23 @@ export function ShopsSkeleton() {
   );
 }
 
+export function OrdersSkeleton() {
+  return (
+    <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Skeleton className="h-9 w-28" />
+        <Skeleton className="h-6 w-8 rounded-full" />
+      </div>
+      <Skeleton className="h-10 w-full mb-6" />
+      <div className="space-y-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-[72px] rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function DashboardSkeleton() {
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto">

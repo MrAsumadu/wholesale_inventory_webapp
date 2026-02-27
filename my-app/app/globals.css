@@ -214,3 +214,52 @@ html {
 .table-row-hover {
   transition: background-color 0.15s ease;
 }
+
+/* Print styles for invoice */
+@media print {
+  /* Hide everything except the invoice */
+  body > * {
+    visibility: hidden;
+  }
+
+  /* Hide navigation elements */
+  aside,
+  nav,
+  .pb-safe {
+    display: none !important;
+  }
+
+  /* Show dialog overlay content */
+  [role="dialog"] {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+  }
+
+  [role="dialog"] * {
+    visibility: visible !important;
+  }
+
+  /* Hide print button and dialog close button */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Clean typography for print */
+  #invoice-content {
+    font-size: 12pt;
+    color: #000 !important;
+  }
+
+  #invoice-content * {
+    color: #000 !important;
+    border-color: #ccc !important;
+  }
+}

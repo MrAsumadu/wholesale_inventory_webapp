@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Grid3X3, Store, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Grid3X3, Store, LayoutDashboard, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/shops", label: "Shops", icon: Store },
+  { href: "/orders", label: "Orders", icon: ClipboardList },
 ];
 
 export function Sidebar() {
