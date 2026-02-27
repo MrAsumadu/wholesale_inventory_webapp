@@ -50,11 +50,12 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 press-effect",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                   : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
               )}
+              title={collapsed ? item.label : undefined}
             >
               <item.icon
                 className={cn(
@@ -62,7 +63,14 @@ export function Sidebar() {
                   active ? "text-primary" : ""
                 )}
               />
-              {!collapsed && <span>{item.label}</span>}
+              <span
+                className={cn(
+                  "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                  collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

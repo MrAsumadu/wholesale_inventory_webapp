@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Pencil, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { categories } from "@/lib/mock-data";
 import type { InventoryItem } from "@/lib/types";
 import { ItemFormModal } from "./item-form-modal";
@@ -84,7 +85,10 @@ export function InventoryTable({ items }: InventoryTableProps) {
               return (
                 <TableRow
                   key={item.id}
-                  className={lowStock ? "bg-destructive/[0.03]" : ""}
+                  className={cn(
+                    "table-row-hover",
+                    lowStock ? "bg-destructive/[0.03]" : ""
+                  )}
                 >
                   <TableCell className="p-2">
                     <div className="w-10 h-10 rounded-md bg-muted overflow-hidden flex items-center justify-center">

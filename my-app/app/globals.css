@@ -129,6 +129,58 @@
 .stagger-children > *:nth-child(9) { animation-delay: 400ms; }
 .stagger-children > *:nth-child(10) { animation-delay: 450ms; }
 
+/* Skeleton loading pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background: var(--muted);
+  border-radius: var(--radius);
+}
+
+/* Slide-in from bottom (for modals/sheets) */
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Scale fade for cards */
+@keyframes scale-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-fade-in {
+  animation: scale-fade-in 0.35s ease-out both;
+}
+
+/* Button press effect */
+.press-effect {
+  transition: transform 0.1s ease;
+}
+.press-effect:active {
+  transform: scale(0.97);
+}
+
 /* Safe area insets for notch/home indicator */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -136,4 +188,29 @@
 
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Ensure minimum touch targets on mobile */
+@media (pointer: coarse) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exception for inline small buttons */
+  .compact-touch {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Row hover animation for tables */
+.table-row-hover {
+  transition: background-color 0.15s ease;
 }

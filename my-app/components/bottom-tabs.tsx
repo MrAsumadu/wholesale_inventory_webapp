@@ -30,13 +30,16 @@ export function BottomTabs() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors",
+                "relative flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-all duration-200 press-effect",
                 active
                   ? "text-primary"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground active:text-foreground"
               )}
             >
-              <item.icon className={cn("w-5 h-5", active && "stroke-[2.5px]")} />
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary animate-scale-fade-in" />
+              )}
+              <item.icon className={cn("w-5 h-5 transition-transform", active && "stroke-[2.5px]")} />
               <span className="text-[10px] font-medium leading-none">{item.label}</span>
             </Link>
           );
