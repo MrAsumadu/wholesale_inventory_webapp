@@ -144,7 +144,8 @@ export function NewOrderFlow({
       if (result.error) {
         setError(result.error.message ?? "Failed to place order. Stock may be insufficient.");
       } else {
-        setOrderId(result.data as string);
+        const id = typeof result.data === "string" ? result.data : null;
+        setOrderId(id);
         setConfirmed(true);
         setReviewing(false);
         router.refresh();
@@ -152,32 +153,31 @@ export function NewOrderFlow({
     });
   };
 
-  const handleExportPreviewPdf = () => {
-    const lineItems = cart.map((c) => ({
+  const pdfLineItems = () =>
+    cart.map((c) => ({
       item_name: c.itemName,
       quantity: c.quantity,
       unit_price: c.unitPrice,
     }));
+
+  const shopInfo = { name: shopName, location: shopLocation, phone: shopPhone };
+
+  const handleExportPreviewPdf = () => {
     generateOrderPdf({
-      lineItems,
+      lineItems: pdfLineItems(),
       total,
-      shop: { name: shopName, location: shopLocation, phone: shopPhone },
+      shop: shopInfo,
       orderId: null,
       orderDate: new Date().toISOString(),
     });
   };
 
   const handleExportInvoicePdf = () => {
-    const lineItems = cart.map((c) => ({
-      item_name: c.itemName,
-      quantity: c.quantity,
-      unit_price: c.unitPrice,
-    }));
     generateOrderPdf({
-      lineItems,
+      lineItems: pdfLineItems(),
       total,
-      shop: { name: shopName, location: shopLocation, phone: shopPhone },
-      orderId: orderId,
+      shop: shopInfo,
+      orderId,
       orderDate: new Date().toISOString(),
     });
   };
@@ -291,7 +291,7 @@ export function NewOrderFlow({
                 </Button>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setReviewing(false)} disabled={isPending}>
+                <Button variant="outline" onClick={() => { setReviewing(false); setError(null); }} disabled={isPending}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
