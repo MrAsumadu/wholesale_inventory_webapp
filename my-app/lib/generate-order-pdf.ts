@@ -45,22 +45,6 @@ export function generateOrderPdf({
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // --- Draft watermark ---
-  if (isDraft) {
-    doc.saveGraphicsState();
-    doc.setFontSize(60);
-    doc.setTextColor(200, 200, 200);
-    const watermarkText = "ORDER PREVIEW";
-    const textWidth = doc.getTextWidth(watermarkText);
-    const centerX = pageWidth / 2 - textWidth / 2;
-    const centerY = doc.internal.pageSize.getHeight() / 2;
-    doc.text(watermarkText, centerX + textWidth / 2, centerY, {
-      angle: 45,
-      align: "center",
-    });
-    doc.restoreGraphicsState();
-  }
-
   // --- Header ---
   doc.setFontSize(20);
   doc.setTextColor(41, 37, 36);
@@ -152,6 +136,20 @@ export function generateOrderPdf({
       totalY + 16,
       { align: "center" }
     );
+  }
+
+  // --- Draft watermark (drawn last so it appears on top) ---
+  if (isDraft) {
+    doc.saveGraphicsState();
+    doc.setGState(doc.GState({ opacity: 0.15 }));
+    doc.setFontSize(60);
+    doc.setTextColor(150, 150, 150);
+    const pageHeight = doc.internal.pageSize.getHeight();
+    doc.text("ORDER PREVIEW", pageWidth / 2, pageHeight / 2, {
+      angle: 45,
+      align: "center",
+    });
+    doc.restoreGraphicsState();
   }
 
   // --- Save ---
