@@ -79,7 +79,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
             id="cat-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Produce"
+            placeholder="e.g. Spices & Herbs"
           />
         </div>
 

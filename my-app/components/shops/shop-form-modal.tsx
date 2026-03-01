@@ -90,7 +90,7 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
             id="shop-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Green Valley Market"
+            placeholder="e.g. Whitechapel Mini Mart"
           />
         </div>
 
@@ -100,7 +100,7 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
             id="owner"
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
-            placeholder="e.g. Maria Santos"
+            placeholder="e.g. Abdul Rahman"
           />
         </div>
 
@@ -110,7 +110,7 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. 142 Oak Street, Springfield, IL 62701"
+            placeholder="e.g. 54 Brick Lane, London E1 6RF"
           />
         </div>
 
@@ -121,7 +121,7 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g. (217) 555-0134"
+            placeholder="e.g. 020 7946 0958"
           />
         </div>
 
