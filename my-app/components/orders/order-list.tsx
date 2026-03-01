@@ -67,7 +67,7 @@ export function OrderList({ orders, shop }: OrderListProps) {
                 </div>
               </div>
               <Badge variant="secondary" className="tabular-nums font-medium">
-                ${order.total.toFixed(2)}
+                £{order.total.toFixed(2)}
               </Badge>
             </button>
 

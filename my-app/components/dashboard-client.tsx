@@ -150,8 +150,8 @@ export function DashboardClient({
               </div>
             </div>
             <p className="text-2xl font-semibold tabular-nums">
-              $
-              {totalRevenue.toLocaleString("en-US", {
+              £
+              {totalRevenue.toLocaleString("en-GB", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -257,7 +257,7 @@ export function DashboardClient({
                         </div>
                       </div>
                       <span className="text-sm font-medium tabular-nums">
-                        ${order.total.toFixed(2)}
+                        £{order.total.toFixed(2)}
                       </span>
                     </div>
                   </Link>

@@ -42,10 +42,10 @@ export function OrderDetail({ order, shop }: OrderDetailProps) {
                 {line.quantity}
               </TableCell>
               <TableCell className="text-sm text-right tabular-nums">
-                ${line.unit_price.toFixed(2)}
+                £{line.unit_price.toFixed(2)}
               </TableCell>
               <TableCell className="text-sm text-right tabular-nums font-medium">
-                ${(line.quantity * line.unit_price).toFixed(2)}
+                £{(line.quantity * line.unit_price).toFixed(2)}
               </TableCell>
             </TableRow>
           ))}
@@ -56,7 +56,7 @@ export function OrderDetail({ order, shop }: OrderDetailProps) {
         <span className="text-sm text-muted-foreground">Total</span>
         <div className="flex items-center gap-3">
           <span className="text-base font-semibold tabular-nums">
-            ${order.total.toFixed(2)}
+            £{order.total.toFixed(2)}
           </span>
           <Button
             variant="outline"

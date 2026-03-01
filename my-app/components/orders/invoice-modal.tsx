@@ -120,10 +120,10 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
                     {line.quantity}
                   </TableCell>
                   <TableCell className="text-sm text-right tabular-nums">
-                    ${line.unit_price.toFixed(2)}
+                    £{line.unit_price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm text-right tabular-nums font-medium">
-                    ${(line.quantity * line.unit_price).toFixed(2)}
+                    £{(line.quantity * line.unit_price).toFixed(2)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -136,7 +136,7 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Total</span>
             <span className="text-lg font-semibold tabular-nums">
-              ${order.total.toFixed(2)}
+              £{order.total.toFixed(2)}
             </span>
           </div>
         </div>
