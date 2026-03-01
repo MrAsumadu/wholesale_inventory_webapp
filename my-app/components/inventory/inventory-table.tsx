@@ -30,13 +30,15 @@ import { ItemFormModal } from "./item-form-modal";
 interface InventoryTableProps {
   items: InventoryItem[];
   categories: Category[];
+  isFiltered?: boolean;
 }
 
-export function InventoryTable({ items, categories }: InventoryTableProps) {
+export function InventoryTable({ items, categories, isFiltered }: InventoryTableProps) {
   const router = useRouter();
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<InventoryItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name ?? "Unknown";
@@ -44,7 +46,9 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
 
   const formatDate = (iso: string | null) => {
     if (!iso) return "N/A";
-    return new Date(iso).toLocaleDateString("en-US", {
+    // Append T00:00 to date-only strings to parse as local time, not UTC
+    const d = iso.includes("T") ? new Date(iso) : new Date(iso + "T00:00");
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -54,12 +58,17 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
+    setDeleteError("");
     try {
-      await deleteItem(deleteTarget.id);
+      const { error } = await deleteItem(deleteTarget.id);
+      if (error) {
+        setDeleteError(error.message ?? "Failed to delete item. It may be referenced by an order.");
+        return;
+      }
       router.refresh();
       setDeleteTarget(null);
-    } catch {
-      // error is handled silently for now
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete item. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -75,9 +84,11 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
             <line x1="12" y1="22.08" x2="12" y2="12" />
           </svg>
         </div>
-        <p className="text-muted-foreground font-medium">No items found</p>
+        <p className="text-muted-foreground font-medium">
+          {isFiltered ? "No items found" : "No inventory items yet"}
+        </p>
         <p className="text-muted-foreground/70 text-sm mt-1">
-          Try adjusting your search or filters
+          {isFiltered ? "Try adjusting your search or filters" : "Add your first item to get started"}
         </p>
       </div>
     );
@@ -148,16 +159,18 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground compact-touch"
                         onClick={() => setEditItem(item)}
+                        aria-label={`Edit ${item.name}`}
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive compact-touch"
                         onClick={() => setDeleteTarget(item)}
+                        aria-label={`Delete ${item.name}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -179,7 +192,7 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
       />
 
       {/* Delete confirmation */}
-      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) { setDeleteTarget(null); setDeleteError(""); } }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Delete Item</DialogTitle>
@@ -188,6 +201,9 @@ export function InventoryTable({ items, categories }: InventoryTableProps) {
               action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          {deleteError && (
+            <p className="text-sm text-destructive">{deleteError}</p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
               Cancel

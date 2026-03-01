@@ -19,7 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
+import { uploadImage, deleteImage } from "@/lib/upload-image";
 import { createItem, updateItem } from "@/lib/actions/inventory";
 import type { InventoryItem, Category } from "@/lib/types";
 
@@ -47,6 +49,7 @@ function ItemForm({
   const [expirationDate, setExpirationDate] = useState(
     item?.expiration_date ?? ""
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,17 +58,24 @@ function ItemForm({
 
     if (!name.trim()) { setError("Item name is required."); return; }
     if (!categoryId) { setError("Please select a category."); return; }
-    if (!price || parseFloat(price) < 0) { setError("Please enter a valid price."); return; }
-    if (!quantity || parseInt(quantity, 10) < 0) { setError("Please enter a valid quantity."); return; }
+    if (price === "" || isNaN(parseFloat(price)) || parseFloat(price) < 0) { setError("Please enter a valid price."); return; }
+    if (quantity === "" || isNaN(parseInt(quantity, 10)) || parseInt(quantity, 10) < 0) { setError("Please enter a valid quantity."); return; }
 
     setLoading(true);
     try {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, "inventory");
+        if (item?.image) await deleteImage(item.image);
+      }
+
       const fields = {
         name: name.trim(),
         price: parseFloat(price),
         quantity: parseInt(quantity, 10),
         category_id: categoryId,
         expiration_date: expirationDate || null,
+        ...(imageUrl && { image: imageUrl }),
       };
 
       if (item) {
@@ -170,12 +180,11 @@ function ItemForm({
 
         <div className="grid gap-2">
           <Label>Image</Label>
-          <div className="flex items-center justify-center h-32 rounded-lg border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Upload className="w-8 h-8" />
-              <span className="text-sm">Click or drag to upload</span>
-            </div>
-          </div>
+          <ImageDropzone
+            currentImageUrl={item?.image}
+            onFileReady={setImageFile}
+            height="h-32"
+          />
         </div>
       </div>
 

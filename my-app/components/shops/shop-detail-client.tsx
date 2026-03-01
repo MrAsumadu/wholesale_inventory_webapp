@@ -128,7 +128,7 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
         </Button>
       </div>
 
-      <OrderList orders={orders} />
+      <OrderList orders={orders} shop={shop} />
 
       {/* Modals */}
       <NewOrderFlow

@@ -12,14 +12,15 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
-import type { Order } from "@/lib/types";
+import type { Order, Shop } from "@/lib/types";
 import { InvoiceModal } from "./invoice-modal";
 
 interface OrderDetailProps {
   order: Order;
+  shop?: Shop | null;
 }
 
-export function OrderDetail({ order }: OrderDetailProps) {
+export function OrderDetail({ order, shop }: OrderDetailProps) {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
 
   return (
@@ -73,6 +74,7 @@ export function OrderDetail({ order }: OrderDetailProps) {
         open={invoiceOpen}
         onClose={() => setInvoiceOpen(false)}
         order={order}
+        shop={shop}
       />
     </div>
   );

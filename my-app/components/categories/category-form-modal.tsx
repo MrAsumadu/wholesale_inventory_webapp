@@ -12,7 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
+import { uploadImage, deleteImage } from "@/lib/upload-image";
 import { createCategory, updateCategory } from "@/lib/actions/categories";
 import type { Category } from "@/lib/types";
 
@@ -24,6 +26,7 @@ interface CategoryFormModalProps {
 
 function CategoryForm({ category, onClose }: { category?: Category | null; onClose: () => void }) {
   const [name, setName] = useState(category?.name ?? "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -36,16 +39,28 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
     setSaving(true);
     setError("");
 
-    const result = category
-      ? await updateCategory(category.id, { name: name.trim() })
-      : await createCategory({ name: name.trim() });
+    try {
+      let imageUrl: string | undefined;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile, "categories");
+        if (category?.image) await deleteImage(category.image);
+      }
 
-    setSaving(false);
-    if (result.error) {
-      setError(result.error.message ?? "Failed to save category. Please try again.");
-    } else {
-      router.refresh();
-      onClose();
+      const fields = { name: name.trim(), ...(imageUrl && { image: imageUrl }) };
+      const result = category
+        ? await updateCategory(category.id, fields)
+        : await createCategory(fields);
+
+      if (result.error) {
+        setError(result.error.message ?? "Failed to save category. Please try again.");
+      } else {
+        router.refresh();
+        onClose();
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to upload image. Please try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -70,17 +85,10 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
 
         <div className="grid gap-2">
           <Label>Image</Label>
-          <div className="flex items-center justify-center h-40 rounded-lg border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-colors group">
-            <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-muted-foreground/80">
-              <Upload className="w-10 h-10" />
-              <span className="text-sm font-medium">
-                Click or drag image to upload
-              </span>
-              <span className="text-xs text-muted-foreground/60">
-                PNG, JPG up to 5MB
-              </span>
-            </div>
-          </div>
+          <ImageDropzone
+            currentImageUrl={category?.image}
+            onFileReady={setImageFile}
+          />
         </div>
       </div>
 

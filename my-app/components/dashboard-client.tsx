@@ -44,11 +44,13 @@ export function DashboardClient({
   const getShopName = (shopId: string) =>
     shops.find((s) => s.id === shopId)?.name ?? "Unknown";
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("en-US", {
+  const formatDate = (iso: string) => {
+    const d = iso.includes("T") ? new Date(iso) : new Date(iso + "T00:00");
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     });
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto animate-fade-in-up">
@@ -219,7 +221,7 @@ export function DashboardClient({
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-lg">Recent Orders</h2>
             <Link
-              href="/shops"
+              href="/orders"
               className="text-sm text-primary hover:text-primary/80 transition-colors"
             >
               View all
@@ -227,38 +229,45 @@ export function DashboardClient({
           </div>
           <Card className="border-border">
             <CardContent className="p-0">
-              {recentOrders.map((order, i) => (
-                <Link key={order.id} href={`/shops/${order.shop_id}`}>
-                  <div
-                    className={`flex items-center justify-between p-4 hover:bg-muted/30 transition-colors ${
-                      i < recentOrders.length - 1
-                        ? "border-b border-border"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Store className="w-4 h-4 text-muted-foreground" />
+              {recentOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Package className="w-8 h-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No orders yet</p>
+                </div>
+              ) : (
+                recentOrders.map((order, i) => (
+                  <Link key={order.id} href={`/shops/${order.shop_id}`}>
+                    <div
+                      className={`flex items-center justify-between p-4 hover:bg-muted/30 transition-colors ${
+                        i < recentOrders.length - 1
+                          ? "border-b border-border"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Store className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {getShopName(order.shop_id)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(order.created_at)} &middot;{" "}
+                            {(order.line_items ?? []).length}{" "}
+                            {(order.line_items ?? []).length === 1
+                              ? "item"
+                              : "items"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {getShopName(order.shop_id)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(order.created_at)} &middot;{" "}
-                          {(order.line_items ?? []).length}{" "}
-                          {(order.line_items ?? []).length === 1
-                            ? "item"
-                            : "items"}
-                        </p>
-                      </div>
+                      <span className="text-sm font-medium tabular-nums">
+                        ${order.total.toFixed(2)}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium tabular-nums">
-                      ${order.total.toFixed(2)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
