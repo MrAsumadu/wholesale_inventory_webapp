@@ -56,3 +56,18 @@ export interface RecentOrder {
   created_at: string;
   line_items?: { id: string }[];
 }
+
+export type AuditEntityType = "category" | "inventory_item" | "shop" | "order";
+export type AuditAction = "create" | "update" | "delete";
+
+export interface AuditLog {
+  id: string;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  action: AuditAction;
+  user_id: string;
+  user_email: string;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  created_at: string;
+}

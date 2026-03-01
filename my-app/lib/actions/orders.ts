@@ -4,6 +4,7 @@ import { updateTag, unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { Order, RecentOrder } from "@/lib/types";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function getOrders(limit = 100): Promise<Order[]> {
   const allCookies = (await cookies()).getAll();
@@ -110,6 +111,15 @@ export async function placeOrder(
     p_shop_id: shopId,
     p_line_items: lineItems,
   });
+
+  if (data) {
+    await logAuditEvent({
+      entityType: "order",
+      entityId: String(data),
+      action: "create",
+      newValues: { shop_id: shopId, line_items: lineItems } as Record<string, unknown>,
+    });
+  }
 
   updateTag("orders");
   updateTag("inventory");
