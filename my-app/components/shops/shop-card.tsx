@@ -53,7 +53,7 @@ export function ShopCard({ shop, orderCount }: ShopCardProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4 shrink-0" />
             <span>
-              {formatTime(shop.openingTime)} – {formatTime(shop.closingTime)}
+              {formatTime(shop.opening_time)} – {formatTime(shop.closing_time)}
             </span>
           </div>
         </div>

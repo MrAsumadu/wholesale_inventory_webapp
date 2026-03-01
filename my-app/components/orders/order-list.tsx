@@ -56,10 +56,10 @@ export function OrderList({ orders }: OrderListProps) {
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 )}
                 <div>
-                  <p className="text-sm font-medium">{formatDate(order.date)}</p>
+                  <p className="text-sm font-medium">{formatDate(order.created_at)}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {order.lineItems.length}{" "}
-                    {order.lineItems.length === 1 ? "item" : "items"}
+                    {(order.line_items ?? []).length}{" "}
+                    {(order.line_items ?? []).length === 1 ? "item" : "items"}
                   </p>
                 </div>
               </div>
