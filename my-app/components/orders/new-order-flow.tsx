@@ -22,8 +22,11 @@ import {
   CheckCircle2,
   ShoppingCart,
   Loader2,
+  ArrowLeft,
+  FileDown,
 } from "lucide-react";
 import { placeOrder } from "@/lib/actions/orders";
+import { generateOrderPdf } from "@/lib/generate-order-pdf";
 import type { InventoryItemSlim, Category } from "@/lib/types";
 
 interface CartItem {
@@ -39,6 +42,8 @@ interface NewOrderFlowProps {
   onClose: () => void;
   shopName: string;
   shopId: string;
+  shopLocation: string;
+  shopPhone: string;
   items: InventoryItemSlim[];
   categories: Category[];
 }
@@ -48,6 +53,8 @@ export function NewOrderFlow({
   onClose,
   shopName,
   shopId,
+  shopLocation,
+  shopPhone,
   items,
   categories,
 }: NewOrderFlowProps) {
@@ -55,6 +62,8 @@ export function NewOrderFlow({
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [confirmed, setConfirmed] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -112,30 +121,64 @@ export function NewOrderFlow({
   const hasOverStock = cart.some((c) => c.quantity > c.maxStock);
   const hasInvalidPrice = cart.some((c) => c.unitPrice < 0);
 
-  const handleConfirm = () => {
+  const handleReview = () => {
     setError(null);
 
     if (cart.length === 0) { setError("Add at least one item to the order."); return; }
     if (hasOverStock) { setError("One or more items exceed available stock. Reduce quantities before confirming."); return; }
     if (hasInvalidPrice) { setError("Unit price cannot be negative."); return; }
 
+    setReviewing(true);
+  };
+
+  const handlePlaceOrder = () => {
+    setError(null);
     const lineItems = cart.map((c) => ({
       item_id: c.itemId,
       item_name: c.itemName,
       quantity: c.quantity,
       unit_price: c.unitPrice,
     }));
-
     startTransition(async () => {
       const result = await placeOrder(shopId, lineItems);
       if (result.error) {
-        setError(
-          result.error.message ?? "Failed to place order. Stock may be insufficient."
-        );
+        setError(result.error.message ?? "Failed to place order. Stock may be insufficient.");
       } else {
+        setOrderId(result.data as string);
         setConfirmed(true);
+        setReviewing(false);
         router.refresh();
       }
+    });
+  };
+
+  const handleExportPreviewPdf = () => {
+    const lineItems = cart.map((c) => ({
+      item_name: c.itemName,
+      quantity: c.quantity,
+      unit_price: c.unitPrice,
+    }));
+    generateOrderPdf({
+      lineItems,
+      total,
+      shop: { name: shopName, location: shopLocation, phone: shopPhone },
+      orderId: null,
+      orderDate: new Date().toISOString(),
+    });
+  };
+
+  const handleExportInvoicePdf = () => {
+    const lineItems = cart.map((c) => ({
+      item_name: c.itemName,
+      quantity: c.quantity,
+      unit_price: c.unitPrice,
+    }));
+    generateOrderPdf({
+      lineItems,
+      total,
+      shop: { name: shopName, location: shopLocation, phone: shopPhone },
+      orderId: orderId,
+      orderDate: new Date().toISOString(),
     });
   };
 
@@ -143,6 +186,8 @@ export function NewOrderFlow({
     setCart([]);
     setSearch("");
     setConfirmed(false);
+    setReviewing(false);
+    setOrderId(null);
     setError(null);
     onClose();
   };
@@ -157,7 +202,11 @@ export function NewOrderFlow({
       <DialogContent className="sm:max-w-[640px] max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
-            {confirmed ? "Order Confirmed" : `New Order — ${shopName}`}
+            {confirmed
+              ? "Order Confirmed"
+              : reviewing
+                ? "Review Order"
+                : `New Order — ${shopName}`}
           </DialogTitle>
         </DialogHeader>
 
@@ -174,10 +223,95 @@ export function NewOrderFlow({
             <p className="text-muted-foreground/70 text-xs">
               Order for {shopName}
             </p>
-            <Button onClick={handleClose} className="mt-6 bg-primary hover:bg-primary/90">
-              Done
-            </Button>
+            <div className="flex gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={handleExportInvoicePdf}
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export Invoice
+              </Button>
+              <Button onClick={handleClose} className="bg-primary hover:bg-primary/90">
+                Done
+              </Button>
+            </div>
           </div>
+        ) : reviewing ? (
+          /* Review state */
+          <>
+            {/* Error banner */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th className="py-2 font-medium">Item</th>
+                    <th className="py-2 font-medium text-center">Qty</th>
+                    <th className="py-2 font-medium text-right">Price</th>
+                    <th className="py-2 font-medium text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((c) => (
+                    <tr key={c.itemId} className="border-b border-border/50">
+                      <td className="py-2">{c.itemName}</td>
+                      <td className="py-2 text-center tabular-nums">{c.quantity}</td>
+                      <td className="py-2 text-right tabular-nums">${c.unitPrice.toFixed(2)}</td>
+                      <td className="py-2 text-right tabular-nums font-medium">
+                        ${(c.quantity * c.unitPrice).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-end mt-3">
+                <span className="text-base font-semibold tabular-nums">
+                  Total: ${total.toFixed(2)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 mt-4 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 text-sm">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>This action cannot be undone. Stock will be deducted immediately.</span>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-row items-center justify-between sm:justify-between border-t border-border pt-4 mt-2">
+              <div>
+                <Button variant="outline" onClick={handleExportPreviewPdf}>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Export PDF
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setReviewing(false)} disabled={isPending}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <Button
+                  onClick={handlePlaceOrder}
+                  disabled={isPending}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Placing Order...
+                    </>
+                  ) : (
+                    "Place Order"
+                  )}
+                </Button>
+              </div>
+            </DialogFooter>
+          </>
         ) : (
           <>
             {/* Error banner */}
@@ -370,22 +504,15 @@ export function NewOrderFlow({
                 )}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleClose} disabled={isPending}>
+                <Button variant="outline" onClick={handleClose}>
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleConfirm}
-                  disabled={cart.length === 0 || hasOverStock || hasInvalidPrice || isPending}
+                  onClick={handleReview}
+                  disabled={cart.length === 0 || hasOverStock || hasInvalidPrice}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Placing Order...
-                    </>
-                  ) : (
-                    "Confirm Order"
-                  )}
+                  Review Order
                 </Button>
               </div>
             </DialogFooter>
