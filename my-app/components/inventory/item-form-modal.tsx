@@ -116,7 +116,7 @@ function ItemForm({
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Organic Bananas (40lb case)"
+            placeholder="e.g. Basmati Rice (20kg sack)"
           />
         </div>
 
