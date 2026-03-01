@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Store, LayoutDashboard, ClipboardList } from "lucide-react";
+import { Package, Store, LayoutDashboard, ClipboardList, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/shops", label: "Shops", icon: Store },
   { href: "/orders", label: "Orders", icon: ClipboardList },
+  { href: "/audit-log", label: "Audit", icon: History },
 ];
 
 export function BottomTabs() {

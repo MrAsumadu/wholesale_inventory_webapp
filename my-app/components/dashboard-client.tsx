@@ -11,8 +11,9 @@ import {
   ShoppingCart,
   ArrowRight,
   TrendingUp,
+  History,
 } from "lucide-react";
-import type { Category, InventoryItemSlim, Shop, RecentOrder } from "@/lib/types";
+import type { Category, InventoryItemSlim, Shop, RecentOrder, AuditLog, AuditEntityType, AuditAction } from "@/lib/types";
 
 interface DashboardClientProps {
   categories: Category[];
@@ -20,6 +21,35 @@ interface DashboardClientProps {
   shops: Shop[];
   recentOrders: RecentOrder[];
   orderStats: { count: number; totalRevenue: number };
+  recentActivity: AuditLog[];
+}
+
+function actionDotColor(action: AuditAction) {
+  switch (action) {
+    case "create": return "bg-green-500";
+    case "update": return "bg-blue-500";
+    case "delete": return "bg-red-500";
+  }
+}
+
+function activityEntityLabel(type: AuditEntityType): string {
+  return {
+    category: "Category",
+    inventory_item: "Inventory Item",
+    shop: "Shop",
+    order: "Order",
+  }[type];
+}
+
+function formatRelativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 export function DashboardClient({
@@ -28,6 +58,7 @@ export function DashboardClient({
   shops,
   recentOrders,
   orderStats,
+  recentActivity,
 }: DashboardClientProps) {
   const totalItems = inventoryItems.length;
   const totalStock = inventoryItems.reduce((sum, i) => sum + i.quantity, 0);
@@ -307,6 +338,59 @@ export function DashboardClient({
           </div>
         </div>
       )}
+      {/* Recent Activity */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-lg">Recent Activity</h2>
+          <Link
+            href="/audit-log"
+            className="text-sm text-primary hover:text-primary/80 transition-colors"
+          >
+            View all
+          </Link>
+        </div>
+        <Card className="border-border">
+          <CardContent className="p-0">
+            {recentActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <History className="w-8 h-8 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No activity yet</p>
+              </div>
+            ) : (
+              recentActivity.map((log, i) => (
+                <div
+                  key={log.id}
+                  className={`flex items-center justify-between p-4 ${
+                    i < recentActivity.length - 1
+                      ? "border-b border-border"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-2 h-2 rounded-full shrink-0 ${actionDotColor(log.action)}`}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">
+                        {log.action === "create"
+                          ? "Created"
+                          : log.action === "update"
+                          ? "Updated"
+                          : "Deleted"}{" "}
+                        {activityEntityLabel(log.entity_type)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.user_email} &middot;{" "}
+                        {formatRelativeTime(log.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
