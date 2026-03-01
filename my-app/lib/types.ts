@@ -2,6 +2,7 @@ export interface Category {
   id: string;
   name: string;
   image: string;
+  created_at: string;
 }
 
 export interface InventoryItem {
@@ -10,8 +11,9 @@ export interface InventoryItem {
   image: string;
   price: number;
   quantity: number;
-  expirationDate: string;
-  categoryId: string;
+  expiration_date: string | null;
+  category_id: string;
+  created_at: string;
 }
 
 export interface Shop {
@@ -20,21 +22,24 @@ export interface Shop {
   owner: string;
   location: string;
   phone: string;
-  openingTime: string;
-  closingTime: string;
+  opening_time: string;
+  closing_time: string;
+  created_at: string;
 }
 
 export interface OrderLineItem {
-  itemId: string;
-  itemName: string;
+  id: string;
+  order_id: string;
+  item_id: string;
+  item_name: string;
   quantity: number;
-  unitPrice: number;
+  unit_price: number;
 }
 
 export interface Order {
   id: string;
-  shopId: string;
-  date: string;
-  lineItems: OrderLineItem[];
+  shop_id: string;
   total: number;
+  created_at: string;
+  line_items?: OrderLineItem[];
 }
