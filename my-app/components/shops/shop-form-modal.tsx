@@ -33,10 +33,11 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      setError("Shop name is required");
-      return;
-    }
+    if (!name.trim()) { setError("Shop name is required."); return; }
+    if (!owner.trim()) { setError("Owner name is required."); return; }
+    if (!location.trim()) { setError("Location is required."); return; }
+    if (!phone.trim()) { setError("Phone number is required."); return; }
+
     setLoading(true);
     setError(null);
 
@@ -61,7 +62,7 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
       router.refresh();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Failed to save shop. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -20,12 +20,12 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Wholesale Inventory",
-  description: "Wholesale inventory and order management",
+  title: "Shahjalal Inventory",
+  description: "Shahjalal inventory and order management",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Wholesale Inventory",
+    title: "Shahjalal Inventory",
   },
 };
 

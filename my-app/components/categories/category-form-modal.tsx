@@ -29,7 +29,10 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
   const router = useRouter();
 
   async function handleSubmit() {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Category name is required.");
+      return;
+    }
     setSaving(true);
     setError("");
 
@@ -39,7 +42,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
 
     setSaving(false);
     if (result.error) {
-      setError(result.error.message ?? "Something went wrong");
+      setError(result.error.message ?? "Failed to save category. Please try again.");
     } else {
       router.refresh();
       onClose();

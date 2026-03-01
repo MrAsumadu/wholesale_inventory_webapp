@@ -94,7 +94,7 @@ export function NewOrderFlow({
 
   const updatePrice = (itemId: string, price: string) => {
     const num = parseFloat(price);
-    if (isNaN(num)) return;
+    if (isNaN(num) || num < 0) return;
     setCart(
       cart.map((c) =>
         c.itemId === itemId ? { ...c, unitPrice: num } : c
@@ -109,8 +109,16 @@ export function NewOrderFlow({
   const total = cart.reduce((sum, c) => sum + c.quantity * c.unitPrice, 0);
   const itemCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
+  const hasOverStock = cart.some((c) => c.quantity > c.maxStock);
+  const hasInvalidPrice = cart.some((c) => c.unitPrice < 0);
+
   const handleConfirm = () => {
     setError(null);
+
+    if (cart.length === 0) { setError("Add at least one item to the order."); return; }
+    if (hasOverStock) { setError("One or more items exceed available stock. Reduce quantities before confirming."); return; }
+    if (hasInvalidPrice) { setError("Unit price cannot be negative."); return; }
+
     const lineItems = cart.map((c) => ({
       item_id: c.itemId,
       item_name: c.itemName,
@@ -367,7 +375,7 @@ export function NewOrderFlow({
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  disabled={cart.length === 0 || isPending}
+                  disabled={cart.length === 0 || hasOverStock || hasInvalidPrice || isPending}
                   className="bg-primary hover:bg-primary/90"
                 >
                   {isPending ? (

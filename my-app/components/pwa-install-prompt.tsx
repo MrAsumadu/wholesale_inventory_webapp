@@ -53,7 +53,7 @@ export function PwaInstallPrompt() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium">Install App</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Add Wholesale Inventory to your home screen for quick access.
+            Add Shahjalal Inventory to your home screen for quick access.
           </p>
           <div className="flex gap-2 mt-3">
             <Button size="sm" onClick={handleInstall}>

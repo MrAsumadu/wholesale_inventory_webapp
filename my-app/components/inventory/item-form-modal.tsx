@@ -52,10 +52,16 @@ function ItemForm({
 
   const handleSubmit = async () => {
     setError(null);
+
+    if (!name.trim()) { setError("Item name is required."); return; }
+    if (!categoryId) { setError("Please select a category."); return; }
+    if (!price || parseFloat(price) < 0) { setError("Please enter a valid price."); return; }
+    if (!quantity || parseInt(quantity, 10) < 0) { setError("Please enter a valid quantity."); return; }
+
     setLoading(true);
     try {
       const fields = {
-        name,
+        name: name.trim(),
         price: parseFloat(price),
         quantity: parseInt(quantity, 10),
         category_id: categoryId,
@@ -73,7 +79,7 @@ function ItemForm({
       router.refresh();
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Failed to save item. Please try again.");
     } finally {
       setLoading(false);
     }
