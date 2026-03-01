@@ -1,30 +1,45 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { updateTag, unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
+import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { Shop } from "@/lib/types";
 
 export async function getShops(): Promise<Shop[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("shops")
-    .select("*")
-    .order("name");
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (): Promise<Shop[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("shops")
+        .select("*")
+        .order("name");
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["shops"],
+    { tags: ["shops"] }
+  )();
 }
 
 export async function getShop(id: string): Promise<Shop | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("shops")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (id: string): Promise<Shop | null> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("shops")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-  if (error) return null;
-  return data;
+      if (error) return null;
+      return data;
+    },
+    ["shop"],
+    { tags: ["shops"] }
+  )(id);
 }
 
 export async function createShop(fields: {
@@ -42,8 +57,7 @@ export async function createShop(fields: {
     .select()
     .single();
 
-  revalidatePath("/shops");
-  revalidatePath("/");
+  updateTag("shops");
   return { data, error };
 }
 
@@ -61,9 +75,7 @@ export async function updateShop(id: string, fields: Partial<{
     .update(fields)
     .eq("id", id);
 
-  revalidatePath("/shops");
-  revalidatePath(`/shops/${id}`);
-  revalidatePath("/");
+  updateTag("shops");
   return { error };
 }
 
@@ -78,7 +90,6 @@ export async function deleteShop(id: string) {
     return { error: { ...error, message: "Cannot delete a shop that has orders." } };
   }
 
-  revalidatePath("/shops");
-  revalidatePath("/");
+  updateTag("shops");
   return { error };
 }
