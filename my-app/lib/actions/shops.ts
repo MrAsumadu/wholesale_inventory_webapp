@@ -74,6 +74,10 @@ export async function deleteShop(id: string) {
     .delete()
     .eq("id", id);
 
+  if (error?.code === "23503") {
+    return { error: { ...error, message: "Cannot delete a shop that has orders." } };
+  }
+
   revalidatePath("/shops");
   revalidatePath("/");
   return { error };

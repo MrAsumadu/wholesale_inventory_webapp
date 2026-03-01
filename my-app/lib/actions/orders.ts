@@ -29,15 +29,14 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
 
 export async function getOrderStats(): Promise<{ count: number; totalRevenue: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, count, error } = await supabase
     .from("orders")
-    .select("total");
+    .select("total", { count: "exact" });
 
   if (error) throw error;
-  const rows = data ?? [];
   return {
-    count: rows.length,
-    totalRevenue: rows.reduce((sum, o) => sum + o.total, 0),
+    count: count ?? 0,
+    totalRevenue: (data ?? []).reduce((sum, o) => sum + o.total, 0),
   };
 }
 
@@ -51,6 +50,20 @@ export async function getShopOrders(shopId: string): Promise<Order[]> {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getOrderCountsByShop(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("shop_id");
+
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    counts[row.shop_id] = (counts[row.shop_id] ?? 0) + 1;
+  }
+  return counts;
 }
 
 export async function placeOrder(
