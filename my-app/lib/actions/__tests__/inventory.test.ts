@@ -107,14 +107,23 @@ describe("inventory actions", () => {
   });
 
   it("deleteItem deletes by id and revalidates", async () => {
-    const mockEq = vi.fn().mockResolvedValue({ error: null });
-    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
-    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+    const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+    const mockSelectSingle = vi.fn().mockResolvedValue({ data: { image: "/placeholder-item.svg" } });
+    const mockSelectEq = vi.fn().mockReturnValue({ single: mockSelectSingle });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockSelectEq });
+
+    let callCount = 0;
+    mockSupabase.from.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return { select: mockSelect };
+      return { delete: mockDelete };
+    });
 
     const { deleteItem } = await import("../inventory");
     await deleteItem("item-1");
 
     expect(mockSupabase.from).toHaveBeenCalledWith("inventory_items");
-    expect(mockEq).toHaveBeenCalledWith("id", "item-1");
+    expect(mockDeleteEq).toHaveBeenCalledWith("id", "item-1");
   });
 });

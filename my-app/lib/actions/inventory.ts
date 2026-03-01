@@ -2,13 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { InventoryItem } from "@/lib/types";
+import type { InventoryItem, InventoryItemSlim } from "@/lib/types";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")
     .select("*")
+    .order("name");
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getInventoryItemsSlim(): Promise<InventoryItemSlim[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inventory_items")
+    .select("id, name, price, quantity, category_id")
     .order("name");
 
   if (error) throw error;
