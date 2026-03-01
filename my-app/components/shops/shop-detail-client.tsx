@@ -136,6 +136,8 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
         onClose={() => setNewOrderOpen(false)}
         shopName={shop.name}
         shopId={shop.id}
+        shopLocation={shop.location}
+        shopPhone={shop.phone}
         items={items}
         categories={categories}
       />
