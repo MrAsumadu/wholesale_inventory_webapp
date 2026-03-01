@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
+import { createCategory, updateCategory } from "@/lib/actions/categories";
 import type { Category } from "@/lib/types";
 
 interface CategoryFormModalProps {
@@ -22,6 +24,27 @@ interface CategoryFormModalProps {
 
 function CategoryForm({ category, onClose }: { category?: Category | null; onClose: () => void }) {
   const [name, setName] = useState(category?.name ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  async function handleSubmit() {
+    if (!name.trim()) return;
+    setSaving(true);
+    setError("");
+
+    const result = category
+      ? await updateCategory(category.id, { name: name.trim() })
+      : await createCategory({ name: name.trim() });
+
+    setSaving(false);
+    if (result.error) {
+      setError(result.error.message ?? "Something went wrong");
+    } else {
+      router.refresh();
+      onClose();
+    }
+  }
 
   return (
     <>
@@ -58,12 +81,14 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
         </div>
       </div>
 
+      {error && <p className="text-sm text-destructive mb-2">{error}</p>}
+
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={saving}>
           Cancel
         </Button>
-        <Button onClick={onClose} className="bg-primary hover:bg-primary/90">
-          {category ? "Save Changes" : "Add Category"}
+        <Button onClick={handleSubmit} disabled={saving} className="bg-primary hover:bg-primary/90">
+          {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Saving...</> : category ? "Save Changes" : "Add Category"}
         </Button>
       </DialogFooter>
     </>

@@ -1,107 +1,17 @@
-"use client";
+import { getCategories } from "@/lib/actions/categories";
+import { getInventoryItems } from "@/lib/actions/inventory";
+import { CategoriesClient } from "@/components/categories/categories-client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
-import { categories, inventoryItems } from "@/lib/mock-data";
-import { CategoryCard } from "@/components/categories/category-card";
-import { CategoryFormModal } from "@/components/categories/category-form-modal";
-import type { Category } from "@/lib/types";
+export default async function CategoriesPage() {
+  const [categories, items] = await Promise.all([
+    getCategories(),
+    getInventoryItems(),
+  ]);
 
-export default function CategoriesPage() {
-  const [addOpen, setAddOpen] = useState(false);
-  const [editCategory, setEditCategory] = useState<Category | null>(null);
-  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
+  const itemCounts: Record<string, number> = {};
+  for (const item of items) {
+    itemCounts[item.category_id] = (itemCounts[item.category_id] ?? 0) + 1;
+  }
 
-  const getItemCount = (categoryId: string) =>
-    inventoryItems.filter((item) => item.categoryId === categoryId).length;
-
-  return (
-    <div className="p-4 md:p-8 max-w-[1200px] mx-auto animate-fade-in-up">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-2xl md:text-3xl text-foreground">
-          Categories
-        </h1>
-        <Button onClick={() => setAddOpen(true)} className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Category
-        </Button>
-      </div>
-
-      {/* Grid */}
-      {categories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Plus className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground font-medium">No categories yet</p>
-          <p className="text-muted-foreground/70 text-sm mt-1 mb-4">
-            Create your first category to organize inventory
-          </p>
-          <Button onClick={() => setAddOpen(true)} className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Category
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 stagger-children">
-          {categories.map((cat) => (
-            <CategoryCard
-              key={cat.id}
-              category={cat}
-              itemCount={getItemCount(cat.id)}
-              onEdit={setEditCategory}
-              onDelete={setDeleteCategory}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Add modal */}
-      <CategoryFormModal open={addOpen} onClose={() => setAddOpen(false)} />
-
-      {/* Edit modal */}
-      <CategoryFormModal
-        open={!!editCategory}
-        onClose={() => setEditCategory(null)}
-        category={editCategory}
-      />
-
-      {/* Delete confirmation */}
-      <Dialog
-        open={!!deleteCategory}
-        onOpenChange={(v) => !v && setDeleteCategory(null)}
-      >
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Delete Category</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteCategory?.name}
-              &rdquo;? Items in this category will need to be reassigned.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteCategory(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteCategory(null)}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+  return <CategoriesClient categories={categories} itemCounts={itemCounts} />;
 }
