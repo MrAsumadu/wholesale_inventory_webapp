@@ -4,6 +4,10 @@ import path from "path";
 export default defineConfig({
   test: {
     globals: true,
+    typecheck: {
+      enabled: true,
+      tsconfig: "./tsconfig.json",
+    },
   },
   resolve: {
     alias: {
