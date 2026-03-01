@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Table,
@@ -20,30 +21,48 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { categories } from "@/lib/mock-data";
-import type { InventoryItem } from "@/lib/types";
+import { deleteItem } from "@/lib/actions/inventory";
+import type { InventoryItem, Category } from "@/lib/types";
 import { ItemFormModal } from "./item-form-modal";
 
 interface InventoryTableProps {
   items: InventoryItem[];
+  categories: Category[];
 }
 
-export function InventoryTable({ items }: InventoryTableProps) {
+export function InventoryTable({ items, categories }: InventoryTableProps) {
+  const router = useRouter();
   const [editItem, setEditItem] = useState<InventoryItem | null>(null);
-  const [deleteItem, setDeleteItem] = useState<InventoryItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<InventoryItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name ?? "Unknown";
   };
 
-  const formatDate = (iso: string) => {
+  const formatDate = (iso: string | null) => {
+    if (!iso) return "N/A";
     return new Date(iso).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteItem(deleteTarget.id);
+      router.refresh();
+      setDeleteTarget(null);
+    } catch {
+      // error is handled silently for now
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -105,7 +124,7 @@ export function InventoryTable({ items }: InventoryTableProps) {
                     {item.name}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">
-                    {getCategoryName(item.categoryId)}
+                    {getCategoryName(item.category_id)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     ${item.price.toFixed(2)}
@@ -122,7 +141,7 @@ export function InventoryTable({ items }: InventoryTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {formatDate(item.expirationDate)}
+                    {formatDate(item.expiration_date)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -138,7 +157,7 @@ export function InventoryTable({ items }: InventoryTableProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteItem(item)}
+                        onClick={() => setDeleteTarget(item)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -156,26 +175,29 @@ export function InventoryTable({ items }: InventoryTableProps) {
         open={!!editItem}
         onClose={() => setEditItem(null)}
         item={editItem}
+        categories={categories}
       />
 
       {/* Delete confirmation */}
-      <Dialog open={!!deleteItem} onOpenChange={(v) => !v && setDeleteItem(null)}>
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Delete Item</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteItem?.name}&rdquo;? This
+              Are you sure you want to delete &ldquo;{deleteTarget?.name}&rdquo;? This
               action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteItem(null)}>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => setDeleteItem(null)}
+              onClick={handleDelete}
+              disabled={deleting}
             >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Delete
             </Button>
           </DialogFooter>

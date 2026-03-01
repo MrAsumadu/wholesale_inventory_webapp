@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -18,22 +19,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload } from "lucide-react";
-import { categories } from "@/lib/mock-data";
-import type { InventoryItem } from "@/lib/types";
+import { Upload, Loader2 } from "lucide-react";
+import { createItem, updateItem } from "@/lib/actions/inventory";
+import type { InventoryItem, Category } from "@/lib/types";
 
 interface ItemFormModalProps {
   open: boolean;
   onClose: () => void;
   item?: InventoryItem | null;
+  categories: Category[];
 }
 
-function ItemForm({ item, onClose }: { item?: InventoryItem | null; onClose: () => void }) {
+function ItemForm({
+  item,
+  onClose,
+  categories,
+}: {
+  item?: InventoryItem | null;
+  onClose: () => void;
+  categories: Category[];
+}) {
+  const router = useRouter();
   const [name, setName] = useState(item?.name ?? "");
-  const [categoryId, setCategoryId] = useState(item?.categoryId ?? "");
+  const [categoryId, setCategoryId] = useState(item?.category_id ?? "");
   const [price, setPrice] = useState(item?.price.toString() ?? "");
   const [quantity, setQuantity] = useState(item?.quantity.toString() ?? "");
-  const [expirationDate, setExpirationDate] = useState(item?.expirationDate ?? "");
+  const [expirationDate, setExpirationDate] = useState(
+    item?.expiration_date ?? ""
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const fields = {
+        name,
+        price: parseFloat(price),
+        quantity: parseInt(quantity, 10),
+        category_id: categoryId,
+        expiration_date: expirationDate || null,
+      };
+
+      if (item) {
+        const { error: err } = await updateItem(item.id, fields);
+        if (err) throw err;
+      } else {
+        const { error: err } = await createItem(fields);
+        if (err) throw err;
+      }
+
+      router.refresh();
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -44,6 +88,12 @@ function ItemForm({ item, onClose }: { item?: InventoryItem | null; onClose: () 
       </DialogHeader>
 
       <div className="grid gap-4 py-4">
+        {error && (
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="grid gap-2">
           <Label htmlFor="name">Name</Label>
           <Input
@@ -124,10 +174,15 @@ function ItemForm({ item, onClose }: { item?: InventoryItem | null; onClose: () 
       </div>
 
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
-        <Button onClick={onClose} className="bg-primary hover:bg-primary/90">
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="bg-primary hover:bg-primary/90"
+        >
+          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {item ? "Save Changes" : "Add Item"}
         </Button>
       </DialogFooter>
@@ -135,11 +190,16 @@ function ItemForm({ item, onClose }: { item?: InventoryItem | null; onClose: () 
   );
 }
 
-export function ItemFormModal({ open, onClose, item }: ItemFormModalProps) {
+export function ItemFormModal({ open, onClose, item, categories }: ItemFormModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-[480px]">
-        <ItemForm key={item?.id ?? "new"} item={item} onClose={onClose} />
+        <ItemForm
+          key={item?.id ?? "new"}
+          item={item}
+          onClose={onClose}
+          categories={categories}
+        />
       </DialogContent>
     </Dialog>
   );
