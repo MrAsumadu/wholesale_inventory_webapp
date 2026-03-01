@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createShop, updateShop } from "@/lib/actions/shops";
 import type { Shop } from "@/lib/types";
 
 interface ShopFormModalProps {
@@ -20,12 +22,50 @@ interface ShopFormModalProps {
 }
 
 function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }) {
+  const router = useRouter();
   const [name, setName] = useState(shop?.name ?? "");
   const [owner, setOwner] = useState(shop?.owner ?? "");
   const [location, setLocation] = useState(shop?.location ?? "");
   const [phone, setPhone] = useState(shop?.phone ?? "");
-  const [openingTime, setOpeningTime] = useState(shop?.openingTime ?? "08:00");
-  const [closingTime, setClosingTime] = useState(shop?.closingTime ?? "18:00");
+  const [openingTime, setOpeningTime] = useState(shop?.opening_time ?? "08:00");
+  const [closingTime, setClosingTime] = useState(shop?.closing_time ?? "18:00");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      setError("Shop name is required");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+
+    try {
+      const fields = {
+        name: name.trim(),
+        owner: owner.trim(),
+        location: location.trim(),
+        phone: phone.trim(),
+        opening_time: openingTime,
+        closing_time: closingTime,
+      };
+
+      if (shop) {
+        const { error: err } = await updateShop(shop.id, fields);
+        if (err) throw err;
+      } else {
+        const { error: err } = await createShop(fields);
+        if (err) throw err;
+      }
+
+      router.refresh();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -36,6 +76,12 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
       </DialogHeader>
 
       <div className="grid gap-4 py-4">
+        {error && (
+          <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+            {error}
+          </p>
+        )}
+
         <div className="grid gap-2">
           <Label htmlFor="shop-name">Shop Name</Label>
           <Input
@@ -100,11 +146,15 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
       </div>
 
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={loading}>
           Cancel
         </Button>
-        <Button onClick={onClose} className="bg-primary hover:bg-primary/90">
-          {shop ? "Save Changes" : "Add Shop"}
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="bg-primary hover:bg-primary/90"
+        >
+          {loading ? "Saving..." : shop ? "Save Changes" : "Add Shop"}
         </Button>
       </DialogFooter>
     </>

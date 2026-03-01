@@ -17,17 +17,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Package, Printer } from "lucide-react";
-import type { Order } from "@/lib/types";
-import { shops } from "@/lib/mock-data";
+import type { Order, Shop } from "@/lib/types";
 
 interface InvoiceModalProps {
   open: boolean;
   onClose: () => void;
   order: Order;
+  shop?: Shop | null;
 }
 
-export function InvoiceModal({ open, onClose, order }: InvoiceModalProps) {
-  const shop = shops.find((s) => s.id === order.shopId);
+export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) {
 
   const formatDate = (iso: string) => {
     return new Date(iso).toLocaleDateString("en-US", {
@@ -66,7 +65,7 @@ export function InvoiceModal({ open, onClose, order }: InvoiceModalProps) {
                 Invoice #{order.id.toUpperCase()}
               </p>
               <p className="text-sm text-muted-foreground">
-                {formatDate(order.date)}
+                {formatDate(order.created_at)}
               </p>
             </div>
           </div>
@@ -100,17 +99,17 @@ export function InvoiceModal({ open, onClose, order }: InvoiceModalProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.lineItems.map((line) => (
-                <TableRow key={line.itemId} className="hover:bg-transparent">
-                  <TableCell className="text-sm">{line.itemName}</TableCell>
+              {(order.line_items ?? []).map((line) => (
+                <TableRow key={line.item_id} className="hover:bg-transparent">
+                  <TableCell className="text-sm">{line.item_name}</TableCell>
                   <TableCell className="text-sm text-right tabular-nums">
                     {line.quantity}
                   </TableCell>
                   <TableCell className="text-sm text-right tabular-nums">
-                    ${line.unitPrice.toFixed(2)}
+                    ${line.unit_price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm text-right tabular-nums font-medium">
-                    ${(line.quantity * line.unitPrice).toFixed(2)}
+                    ${(line.quantity * line.unit_price).toFixed(2)}
                   </TableCell>
                 </TableRow>
               ))}

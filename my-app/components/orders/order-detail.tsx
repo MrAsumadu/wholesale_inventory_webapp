@@ -34,17 +34,17 @@ export function OrderDetail({ order }: OrderDetailProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {order.lineItems.map((line) => (
-            <TableRow key={line.itemId} className="hover:bg-transparent">
-              <TableCell className="text-sm">{line.itemName}</TableCell>
+          {(order.line_items ?? []).map((line) => (
+            <TableRow key={line.item_id} className="hover:bg-transparent">
+              <TableCell className="text-sm">{line.item_name}</TableCell>
               <TableCell className="text-sm text-right tabular-nums">
                 {line.quantity}
               </TableCell>
               <TableCell className="text-sm text-right tabular-nums">
-                ${line.unitPrice.toFixed(2)}
+                ${line.unit_price.toFixed(2)}
               </TableCell>
               <TableCell className="text-sm text-right tabular-nums font-medium">
-                ${(line.quantity * line.unitPrice).toFixed(2)}
+                ${(line.quantity * line.unit_price).toFixed(2)}
               </TableCell>
             </TableRow>
           ))}
