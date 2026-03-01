@@ -25,7 +25,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r border-border bg-sidebar h-screen sticky top-0 transition-all duration-300 ease-in-out",
+        "hidden md:flex flex-col border-r border-border bg-sidebar h-screen sticky top-0 transition-all duration-200 ease-in-out",
         collapsed ? "w-[72px]" : "w-[240px]"
       )}
     >
@@ -65,7 +65,7 @@ export function Sidebar() {
               />
               <span
                 className={cn(
-                  "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                  "transition-all duration-200 overflow-hidden whitespace-nowrap",
                   collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
                 )}
               >
