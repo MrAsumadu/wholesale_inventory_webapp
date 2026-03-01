@@ -16,12 +16,12 @@ import {
 import { OrderList } from "@/components/orders/order-list";
 import { NewOrderFlow } from "@/components/orders/new-order-flow";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
-import type { Shop, Order, InventoryItem, Category } from "@/lib/types";
+import type { Shop, Order, InventoryItemSlim, Category } from "@/lib/types";
 
 interface ShopDetailClientProps {
   shop: Shop;
   orders: Order[];
-  items: InventoryItem[];
+  items: InventoryItemSlim[];
   categories: Category[];
 }
 

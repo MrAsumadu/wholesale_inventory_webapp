@@ -16,6 +16,11 @@ export interface InventoryItem {
   created_at: string;
 }
 
+export type InventoryItemSlim = Pick<
+  InventoryItem,
+  "id" | "name" | "price" | "quantity" | "category_id"
+>;
+
 export interface Shop {
   id: string;
   name: string;
@@ -42,4 +47,12 @@ export interface Order {
   total: number;
   created_at: string;
   line_items?: OrderLineItem[];
+}
+
+export interface RecentOrder {
+  id: string;
+  shop_id: string;
+  total: number;
+  created_at: string;
+  line_items?: { id: string }[];
 }

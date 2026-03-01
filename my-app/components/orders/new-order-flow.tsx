@@ -24,7 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { placeOrder } from "@/lib/actions/orders";
-import type { InventoryItem, Category } from "@/lib/types";
+import type { InventoryItemSlim, Category } from "@/lib/types";
 
 interface CartItem {
   itemId: string;
@@ -39,7 +39,7 @@ interface NewOrderFlowProps {
   onClose: () => void;
   shopName: string;
   shopId: string;
-  items: InventoryItem[];
+  items: InventoryItemSlim[];
   categories: Category[];
 }
 

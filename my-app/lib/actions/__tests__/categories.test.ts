@@ -57,14 +57,23 @@ describe("categories actions", () => {
   });
 
   it("deleteCategory deletes by id and revalidates", async () => {
-    const mockEq = vi.fn().mockResolvedValue({ error: null });
-    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
-    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+    const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+    const mockSelectSingle = vi.fn().mockResolvedValue({ data: { image: "/placeholder-item.svg" } });
+    const mockSelectEq = vi.fn().mockReturnValue({ single: mockSelectSingle });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockSelectEq });
+
+    let callCount = 0;
+    mockSupabase.from.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return { select: mockSelect };
+      return { delete: mockDelete };
+    });
 
     const { deleteCategory } = await import("../categories");
     await deleteCategory("test-id");
 
     expect(mockSupabase.from).toHaveBeenCalledWith("categories");
-    expect(mockEq).toHaveBeenCalledWith("id", "test-id");
+    expect(mockDeleteEq).toHaveBeenCalledWith("id", "test-id");
   });
 });

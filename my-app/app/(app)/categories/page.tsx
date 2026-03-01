@@ -1,11 +1,11 @@
 import { getCategories } from "@/lib/actions/categories";
-import { getInventoryItems } from "@/lib/actions/inventory";
+import { getInventoryItemsSlim } from "@/lib/actions/inventory";
 import { CategoriesClient } from "@/components/categories/categories-client";
 
 export default async function CategoriesPage() {
   const [categories, items] = await Promise.all([
     getCategories(),
-    getInventoryItems(),
+    getInventoryItemsSlim(),
   ]);
 
   const itemCounts: Record<string, number> = {};

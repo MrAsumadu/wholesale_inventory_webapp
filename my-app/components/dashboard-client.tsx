@@ -12,34 +12,29 @@ import {
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
-import type { Category, InventoryItem, Shop, Order } from "@/lib/types";
+import type { Category, InventoryItemSlim, Shop, RecentOrder } from "@/lib/types";
 
 interface DashboardClientProps {
   categories: Category[];
-  inventoryItems: InventoryItem[];
+  inventoryItems: InventoryItemSlim[];
   shops: Shop[];
-  orders: Order[];
+  recentOrders: RecentOrder[];
+  orderStats: { count: number; totalRevenue: number };
 }
 
 export function DashboardClient({
   categories,
   inventoryItems,
   shops,
-  orders,
+  recentOrders,
+  orderStats,
 }: DashboardClientProps) {
   const totalItems = inventoryItems.length;
   const totalStock = inventoryItems.reduce((sum, i) => sum + i.quantity, 0);
   const lowStockItems = inventoryItems.filter((i) => i.quantity < 10);
   const totalShops = shops.length;
-  const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-
-  const recentOrders = [...orders]
-    .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-    .slice(0, 5);
+  const totalOrders = orderStats.count;
+  const totalRevenue = orderStats.totalRevenue;
 
   const getShopName = (shopId: string) =>
     shops.find((s) => s.id === shopId)?.name ?? "Unknown";
