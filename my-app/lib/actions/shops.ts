@@ -4,6 +4,7 @@ import { updateTag, unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { Shop } from "@/lib/types";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function getShops(): Promise<Shop[]> {
   const allCookies = (await cookies()).getAll();
@@ -57,6 +58,15 @@ export async function createShop(fields: {
     .select()
     .single();
 
+  if (data) {
+    await logAuditEvent({
+      entityType: "shop",
+      entityId: data.id,
+      action: "create",
+      newValues: data as Record<string, unknown>,
+    });
+  }
+
   updateTag("shops");
   return { data, error };
 }
@@ -70,10 +80,27 @@ export async function updateShop(id: string, fields: Partial<{
   closing_time: string;
 }>) {
   const supabase = await createClient();
+
+  const { data: oldData } = await supabase
+    .from("shops")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("shops")
     .update(fields)
     .eq("id", id);
+
+  if (!error) {
+    await logAuditEvent({
+      entityType: "shop",
+      entityId: id,
+      action: "update",
+      oldValues: oldData as Record<string, unknown> | null,
+      newValues: fields as Record<string, unknown>,
+    });
+  }
 
   updateTag("shops");
   return { error };
@@ -81,6 +108,13 @@ export async function updateShop(id: string, fields: Partial<{
 
 export async function deleteShop(id: string) {
   const supabase = await createClient();
+
+  const { data: shop } = await supabase
+    .from("shops")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("shops")
     .delete()
@@ -88,6 +122,15 @@ export async function deleteShop(id: string) {
 
   if (error?.code === "23503") {
     return { error: { ...error, message: "Cannot delete a shop that has orders." } };
+  }
+
+  if (!error && shop) {
+    await logAuditEvent({
+      entityType: "shop",
+      entityId: id,
+      action: "delete",
+      oldValues: shop as Record<string, unknown>,
+    });
   }
 
   updateTag("shops");

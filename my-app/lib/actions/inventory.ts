@@ -4,6 +4,7 @@ import { updateTag, unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { InventoryItem, InventoryItemSlim } from "@/lib/types";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
   const allCookies = (await cookies()).getAll();
@@ -63,6 +64,15 @@ export async function createItem(fields: {
     .select()
     .single();
 
+  if (data) {
+    await logAuditEvent({
+      entityType: "inventory_item",
+      entityId: data.id,
+      action: "create",
+      newValues: data as Record<string, unknown>,
+    });
+  }
+
   updateTag("inventory");
   return { data, error };
 }
@@ -76,10 +86,27 @@ export async function updateItem(id: string, fields: Partial<{
   image: string;
 }>) {
   const supabase = await createClient();
+
+  const { data: oldData } = await supabase
+    .from("inventory_items")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("inventory_items")
     .update(fields)
     .eq("id", id);
+
+  if (!error) {
+    await logAuditEvent({
+      entityType: "inventory_item",
+      entityId: id,
+      action: "update",
+      oldValues: oldData as Record<string, unknown> | null,
+      newValues: fields as Record<string, unknown>,
+    });
+  }
 
   updateTag("inventory");
   return { error };
@@ -90,7 +117,7 @@ export async function deleteItem(id: string) {
 
   const { data: item } = await supabase
     .from("inventory_items")
-    .select("image")
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -101,6 +128,15 @@ export async function deleteItem(id: string) {
 
   if (error?.code === "23503") {
     return { error: { ...error, message: "Cannot delete an item that has been ordered." } };
+  }
+
+  if (!error && item) {
+    await logAuditEvent({
+      entityType: "inventory_item",
+      entityId: id,
+      action: "delete",
+      oldValues: item as Record<string, unknown>,
+    });
   }
 
   if (!error && item?.image && !item.image.startsWith("/")) {
