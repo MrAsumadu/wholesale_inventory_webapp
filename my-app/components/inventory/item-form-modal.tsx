@@ -91,7 +91,6 @@ function ItemForm({
       let imageUrl: string | undefined;
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, "inventory");
-        if (item?.image) await deleteImage(item.image);
       }
 
       const fields = {
@@ -111,6 +110,7 @@ function ItemForm({
         if (err) throw err;
       }
 
+      if (imageFile && item?.image) await deleteImage(item.image);
       router.refresh();
       onClose();
     } catch (err: unknown) {

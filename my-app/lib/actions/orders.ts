@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Order, RecentOrder } from "@/lib/types";
 
-export async function getOrders(): Promise<Order[]> {
+export async function getOrders(limit = 100): Promise<Order[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
     .select("*, line_items:order_line_items(*)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return data ?? [];
@@ -29,24 +30,23 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
 
 export async function getOrderStats(): Promise<{ count: number; totalRevenue: number }> {
   const supabase = await createClient();
-  const { data, count, error } = await supabase
-    .from("orders")
-    .select("total", { count: "exact" });
+  const { data, error } = await supabase.rpc("get_order_stats");
 
   if (error) throw error;
   return {
-    count: count ?? 0,
-    totalRevenue: (data ?? []).reduce((sum, o) => sum + o.total, 0),
+    count: data?.count ?? 0,
+    totalRevenue: data?.totalRevenue ?? 0,
   };
 }
 
-export async function getShopOrders(shopId: string): Promise<Order[]> {
+export async function getShopOrders(shopId: string, limit = 100): Promise<Order[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
     .select("*, line_items:order_line_items(*)")
     .eq("shop_id", shopId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) throw error;
   return data ?? [];
@@ -54,16 +54,10 @@ export async function getShopOrders(shopId: string): Promise<Order[]> {
 
 export async function getOrderCountsByShop(): Promise<Record<string, number>> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select("shop_id");
+  const { data, error } = await supabase.rpc("get_order_counts_by_shop");
 
   if (error) throw error;
-  const counts: Record<string, number> = {};
-  for (const row of data ?? []) {
-    counts[row.shop_id] = (counts[row.shop_id] ?? 0) + 1;
-  }
-  return counts;
+  return (data as Record<string, number>) ?? {};
 }
 
 export async function placeOrder(
