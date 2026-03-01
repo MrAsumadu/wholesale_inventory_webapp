@@ -43,7 +43,6 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
       let imageUrl: string | undefined;
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, "categories");
-        if (category?.image) await deleteImage(category.image);
       }
 
       const fields = { name: name.trim(), ...(imageUrl && { image: imageUrl }) };
@@ -54,6 +53,7 @@ function CategoryForm({ category, onClose }: { category?: Category | null; onClo
       if (result.error) {
         setError(result.error.message ?? "Failed to save category. Please try again.");
       } else {
+        if (imageFile && category?.image) await deleteImage(category.image);
         router.refresh();
         onClose();
       }

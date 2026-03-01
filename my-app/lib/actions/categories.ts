@@ -54,6 +54,10 @@ export async function deleteCategory(id: string) {
     .delete()
     .eq("id", id);
 
+  if (error?.code === "23503") {
+    return { error: { ...error, message: "Cannot delete a category that has items. Reassign items first." } };
+  }
+
   if (!error && category?.image && !category.image.startsWith("/")) {
     const marker = "/storage/v1/object/public/images/";
     const idx = category.image.indexOf(marker);
