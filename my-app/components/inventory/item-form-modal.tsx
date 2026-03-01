@@ -19,10 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { uploadImage, deleteImage } from "@/lib/upload-image";
 import { createItem, updateItem } from "@/lib/actions/inventory";
+import { createCategory } from "@/lib/actions/categories";
 import type { InventoryItem, Category } from "@/lib/types";
 
 interface ItemFormModalProps {
@@ -52,6 +53,30 @@ function ItemForm({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [localCategories, setLocalCategories] = useState<Category[]>(categories);
+
+  const handleCreateCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+    setCategoryLoading(true);
+    try {
+      const { data, error: err } = await createCategory({ name: trimmed });
+      if (err) throw err;
+      if (data) {
+        setLocalCategories((prev) => [...prev, data as Category]);
+        setCategoryId(data.id);
+      }
+      setNewCategoryName("");
+      setCreatingCategory(false);
+    } catch {
+      setError("Failed to create category.");
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     setError(null);
@@ -122,18 +147,59 @@ function ItemForm({
 
         <div className="grid gap-2">
           <Label htmlFor="category">Category</Label>
-          <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger id="category">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {creatingCategory ? (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Category name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateCategory()}
+                disabled={categoryLoading}
+                autoFocus
+              />
+              <Button
+                size="sm"
+                onClick={handleCreateCategory}
+                disabled={categoryLoading || !newCategoryName.trim()}
+                className="shrink-0 bg-primary hover:bg-primary/90"
+              >
+                {categoryLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => { setCreatingCategory(false); setNewCategoryName(""); }}
+                disabled={categoryLoading}
+                className="shrink-0"
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger id="category" className="flex-1">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {localCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => setCreatingCategory(true)}
+                className="shrink-0"
+                title="New category"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
