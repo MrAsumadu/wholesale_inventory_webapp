@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +21,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   ShoppingCart,
+  Loader2,
 } from "lucide-react";
-import { inventoryItems, categories } from "@/lib/mock-data";
+import { placeOrder } from "@/lib/actions/orders";
+import type { InventoryItem, Category } from "@/lib/types";
 
 interface CartItem {
   itemId: string;
@@ -35,24 +38,37 @@ interface NewOrderFlowProps {
   open: boolean;
   onClose: () => void;
   shopName: string;
+  shopId: string;
+  items: InventoryItem[];
+  categories: Category[];
 }
 
-export function NewOrderFlow({ open, onClose, shopName }: NewOrderFlowProps) {
+export function NewOrderFlow({
+  open,
+  onClose,
+  shopName,
+  shopId,
+  items,
+  categories,
+}: NewOrderFlowProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [confirmed, setConfirmed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const filteredItems = useMemo(() => {
-    if (!search) return inventoryItems;
-    return inventoryItems.filter((item) =>
+    if (!search) return items;
+    return items.filter((item) =>
       item.name.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [search, items]);
 
   const addToCart = (itemId: string) => {
     const existing = cart.find((c) => c.itemId === itemId);
     if (existing) return;
-    const item = inventoryItems.find((i) => i.id === itemId);
+    const item = items.find((i) => i.id === itemId);
     if (!item) return;
     setCart([
       ...cart,
@@ -94,13 +110,32 @@ export function NewOrderFlow({ open, onClose, shopName }: NewOrderFlowProps) {
   const itemCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
   const handleConfirm = () => {
-    setConfirmed(true);
+    setError(null);
+    const lineItems = cart.map((c) => ({
+      item_id: c.itemId,
+      item_name: c.itemName,
+      quantity: c.quantity,
+      unit_price: c.unitPrice,
+    }));
+
+    startTransition(async () => {
+      const result = await placeOrder(shopId, lineItems);
+      if (result.error) {
+        setError(
+          result.error.message ?? "Failed to place order. Stock may be insufficient."
+        );
+      } else {
+        setConfirmed(true);
+        router.refresh();
+      }
+    });
   };
 
   const handleClose = () => {
     setCart([]);
     setSearch("");
     setConfirmed(false);
+    setError(null);
     onClose();
   };
 
@@ -137,6 +172,14 @@ export function NewOrderFlow({ open, onClose, shopName }: NewOrderFlowProps) {
           </div>
         ) : (
           <>
+            {/* Error banner */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* Item selection */}
             <div className="flex-1 overflow-hidden flex flex-col gap-4 min-h-0">
               <div className="relative">
@@ -168,7 +211,7 @@ export function NewOrderFlow({ open, onClose, shopName }: NewOrderFlowProps) {
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-muted-foreground">
-                              {getCategoryName(item.categoryId)}
+                              {getCategoryName(item.category_id)}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               ·
@@ -319,15 +362,22 @@ export function NewOrderFlow({ open, onClose, shopName }: NewOrderFlowProps) {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleClose}>
+                <Button variant="outline" onClick={handleClose} disabled={isPending}>
                   Cancel
                 </Button>
                 <Button
                   onClick={handleConfirm}
-                  disabled={cart.length === 0}
+                  disabled={cart.length === 0 || isPending}
                   className="bg-primary hover:bg-primary/90"
                 >
-                  Confirm Order
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Placing Order...
+                    </>
+                  ) : (
+                    "Confirm Order"
+                  )}
                 </Button>
               </div>
             </DialogFooter>
