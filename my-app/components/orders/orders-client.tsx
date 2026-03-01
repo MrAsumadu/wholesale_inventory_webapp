@@ -115,7 +115,7 @@ export function OrdersClient({ orders, shops }: OrdersClientProps) {
                     variant="secondary"
                     className="tabular-nums font-medium"
                   >
-                    ${order.total.toFixed(2)}
+                    £{order.total.toFixed(2)}
                   </Badge>
                 </button>
 

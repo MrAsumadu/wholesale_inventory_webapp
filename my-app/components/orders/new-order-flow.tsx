@@ -218,7 +218,7 @@ export function NewOrderFlow({
             </div>
             <h3 className="font-display text-xl mb-2">Order placed successfully</h3>
             <p className="text-muted-foreground text-sm mb-1">
-              {itemCount} items totaling ${total.toFixed(2)}
+              {itemCount} items totaling £{total.toFixed(2)}
             </p>
             <p className="text-muted-foreground/70 text-xs">
               Order for {shopName}
@@ -262,9 +262,9 @@ export function NewOrderFlow({
                     <tr key={c.itemId} className="border-b border-border/50">
                       <td className="py-2">{c.itemName}</td>
                       <td className="py-2 text-center tabular-nums">{c.quantity}</td>
-                      <td className="py-2 text-right tabular-nums">${c.unitPrice.toFixed(2)}</td>
+                      <td className="py-2 text-right tabular-nums">£{c.unitPrice.toFixed(2)}</td>
                       <td className="py-2 text-right tabular-nums font-medium">
-                        ${(c.quantity * c.unitPrice).toFixed(2)}
+                        £{(c.quantity * c.unitPrice).toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -273,7 +273,7 @@ export function NewOrderFlow({
 
               <div className="flex justify-end mt-3">
                 <span className="text-base font-semibold tabular-nums">
-                  Total: ${total.toFixed(2)}
+                  Total: £{total.toFixed(2)}
                 </span>
               </div>
 
@@ -365,7 +365,7 @@ export function NewOrderFlow({
                               ·
                             </span>
                             <span className="text-xs font-medium tabular-nums">
-                              ${item.price.toFixed(2)}
+                              £{item.price.toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -448,7 +448,7 @@ export function NewOrderFlow({
                             <div className="w-20">
                               <div className="relative">
                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                  $
+                                  £
                                 </span>
                                 <Input
                                   type="number"
@@ -465,7 +465,7 @@ export function NewOrderFlow({
 
                             {/* Subtotal */}
                             <span className="text-sm font-medium tabular-nums w-16 text-right">
-                              $
+                              £
                               {(cartItem.quantity * cartItem.unitPrice).toFixed(
                                 2
                               )}
@@ -495,7 +495,7 @@ export function NewOrderFlow({
                   <div>
                     <span className="text-sm text-muted-foreground">Total: </span>
                     <span className="text-lg font-semibold tabular-nums">
-                      ${total.toFixed(2)}
+                      £{total.toFixed(2)}
                     </span>
                     <Badge variant="secondary" className="ml-2 text-xs">
                       {itemCount} {itemCount === 1 ? "item" : "items"}

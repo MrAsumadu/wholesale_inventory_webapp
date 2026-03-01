@@ -138,7 +138,7 @@ export function InventoryTable({ items, categories, isFiltered }: InventoryTable
                     {getCategoryName(item.category_id)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    ${item.price.toFixed(2)}
+                    £{item.price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <span className="tabular-nums">{item.quantity}</span>

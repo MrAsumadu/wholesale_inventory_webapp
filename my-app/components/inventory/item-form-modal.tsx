@@ -204,10 +204,10 @@ function ItemForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="price">Price ($)</Label>
+            <Label htmlFor="price">Price (£)</Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                $
+                £
               </span>
               <Input
                 id="price"
