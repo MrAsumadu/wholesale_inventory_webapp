@@ -204,6 +204,16 @@
   }
 }
 
+/* Login brand panel — compact on mobile */
+.login-brand-panel {
+  min-height: 140px;
+}
+@media (min-width: 768px) {
+  .login-brand-panel {
+    min-height: 100dvh;
+  }
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
