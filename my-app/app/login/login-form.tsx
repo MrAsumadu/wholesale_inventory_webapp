@@ -112,7 +112,7 @@ export function LoginForm() {
           <div className="flex items-center gap-2 text-sm text-destructive animate-fade-in-up">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>
-              {errorMessage || "Something went wrong. Please try again."}
+              {errorMessage || "Invalid email or password. Please check your credentials and try again."}
             </span>
           </div>
         )}

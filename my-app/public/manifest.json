@@ -1,7 +1,7 @@
 {
-  "name": "Wholesale Inventory",
+  "name": "Shahjalal Inventory",
   "short_name": "Inventory",
-  "description": "Wholesale inventory and order management",
+  "description": "Shahjalal inventory and order management",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
