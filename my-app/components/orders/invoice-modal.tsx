@@ -101,7 +101,7 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
             </TableHeader>
             <TableBody>
               {(order.line_items ?? []).map((line) => (
-                <TableRow key={line.item_id} className="hover:bg-transparent">
+                <TableRow key={line.id} className="hover:bg-transparent">
                   <TableCell className="text-sm">{line.item_name}</TableCell>
                   <TableCell className="text-sm text-right tabular-nums">
                     {line.quantity}
