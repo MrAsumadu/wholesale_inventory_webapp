@@ -44,6 +44,7 @@ export async function placeOrder(
 
   revalidatePath("/orders");
   revalidatePath("/inventory");
+  revalidatePath("/shops");
   revalidatePath(`/shops/${shopId}`);
   revalidatePath("/");
   return { data, error };

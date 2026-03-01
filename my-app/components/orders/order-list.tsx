@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Package } from "lucide-react";
-import type { Order } from "@/lib/types";
+import type { Order, Shop } from "@/lib/types";
 import { OrderDetail } from "./order-detail";
 
 interface OrderListProps {
   orders: Order[];
+  shop?: Shop | null;
 }
 
-export function OrderList({ orders }: OrderListProps) {
+export function OrderList({ orders, shop }: OrderListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString("en-US", {
+    const d = iso.includes("T") ? new Date(iso) : new Date(iso + "T00:00");
+    return d.toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -48,6 +50,7 @@ export function OrderList({ orders }: OrderListProps) {
             <button
               onClick={() => setExpandedId(expanded ? null : order.id)}
               className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
+              aria-expanded={expanded}
             >
               <div className="flex items-center gap-4">
                 {expanded ? (
@@ -70,7 +73,7 @@ export function OrderList({ orders }: OrderListProps) {
 
             {expanded && (
               <div className="border-t border-border animate-fade-in-up">
-                <OrderDetail order={order} />
+                <OrderDetail order={order} shop={shop} />
               </div>
             )}
           </div>

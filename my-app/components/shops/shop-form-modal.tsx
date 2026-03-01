@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 import { createShop, updateShop } from "@/lib/actions/shops";
 import type { Shop } from "@/lib/types";
 
@@ -155,7 +156,8 @@ function ShopForm({ shop, onClose }: { shop?: Shop | null; onClose: () => void }
           disabled={loading}
           className="bg-primary hover:bg-primary/90"
         >
-          {loading ? "Saving..." : shop ? "Save Changes" : "Add Shop"}
+          {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {shop ? "Save Changes" : "Add Shop"}
         </Button>
       </DialogFooter>
     </>

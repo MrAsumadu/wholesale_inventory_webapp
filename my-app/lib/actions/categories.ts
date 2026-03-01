@@ -42,10 +42,26 @@ export async function updateCategory(id: string, fields: { name?: string; image?
 
 export async function deleteCategory(id: string) {
   const supabase = await createClient();
+
+  const { data: category } = await supabase
+    .from("categories")
+    .select("image")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("categories")
     .delete()
     .eq("id", id);
+
+  if (!error && category?.image && !category.image.startsWith("/")) {
+    const marker = "/storage/v1/object/public/images/";
+    const idx = category.image.indexOf(marker);
+    if (idx !== -1) {
+      const path = category.image.substring(idx + marker.length);
+      await supabase.storage.from("images").remove([path]);
+    }
+  }
 
   revalidatePath("/categories");
   revalidatePath("/");

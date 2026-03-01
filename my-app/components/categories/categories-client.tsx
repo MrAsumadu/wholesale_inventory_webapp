@@ -37,7 +37,12 @@ export function CategoriesClient({ categories, itemCounts }: CategoriesClientPro
     const { error } = await deleteCategory(deleteCat.id);
     setDeleting(false);
     if (error) {
-      setDeleteError("Cannot delete a category that has items. Reassign items first.");
+      const msg = error.message ?? "";
+      setDeleteError(
+        msg.includes("restrict") || msg.includes("violates foreign key")
+          ? "Cannot delete a category that has items. Reassign items first."
+          : msg || "Failed to delete category. Please try again."
+      );
     } else {
       setDeleteCat(null);
       router.refresh();

@@ -53,6 +53,7 @@ export function InventoryClient({ items, categories }: InventoryClientProps) {
           <button
             onClick={() => setAlertDismissed(true)}
             className="text-amber-600 hover:text-amber-800 shrink-0"
+            aria-label="Dismiss low stock alert"
           >
             <X className="w-4 h-4" />
           </button>
@@ -97,7 +98,7 @@ export function InventoryClient({ items, categories }: InventoryClientProps) {
       </div>
 
       {/* Table */}
-      <InventoryTable items={filteredItems} categories={categories} />
+      <InventoryTable items={filteredItems} categories={categories} isFiltered={search !== "" || categoryFilter !== "all"} />
 
       {/* Add Item Modal */}
       <ItemFormModal

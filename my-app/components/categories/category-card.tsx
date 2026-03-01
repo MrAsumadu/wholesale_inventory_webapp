@@ -42,28 +42,30 @@ export function CategoryCard({
         {/* Action buttons - appear on hover */}
         <div
           className={`absolute top-3 right-3 flex gap-1.5 transition-opacity duration-200 ${
-            hovered ? "opacity-100" : "opacity-0"
-          }`}
+            hovered ? "opacity-100" : "opacity-0 sm:opacity-0"
+          } max-sm:opacity-100`}
         >
           <Button
             variant="secondary"
             size="icon"
-            className="h-8 w-8 bg-white/90 hover:bg-white backdrop-blur-sm shadow-sm"
+            className="h-8 w-8 bg-white/90 hover:bg-white backdrop-blur-sm shadow-sm compact-touch"
             onClick={(e) => {
               e.stopPropagation();
               onEdit(category);
             }}
+            aria-label={`Edit ${category.name}`}
           >
             <Pencil className="w-3.5 h-3.5" />
           </Button>
           <Button
             variant="secondary"
             size="icon"
-            className="h-8 w-8 bg-white/90 hover:bg-white hover:text-destructive backdrop-blur-sm shadow-sm"
+            className="h-8 w-8 bg-white/90 hover:bg-white hover:text-destructive backdrop-blur-sm shadow-sm compact-touch"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(category);
             }}
+            aria-label={`Delete ${category.name}`}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>

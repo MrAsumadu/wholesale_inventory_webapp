@@ -63,10 +63,26 @@ export async function updateItem(id: string, fields: Partial<{
 
 export async function deleteItem(id: string) {
   const supabase = await createClient();
+
+  const { data: item } = await supabase
+    .from("inventory_items")
+    .select("image")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("inventory_items")
     .delete()
     .eq("id", id);
+
+  if (!error && item?.image && !item.image.startsWith("/")) {
+    const marker = "/storage/v1/object/public/images/";
+    const idx = item.image.indexOf(marker);
+    if (idx !== -1) {
+      const path = item.image.substring(idx + marker.length);
+      await supabase.storage.from("images").remove([path]);
+    }
+  }
 
   revalidatePath("/inventory");
   revalidatePath("/");

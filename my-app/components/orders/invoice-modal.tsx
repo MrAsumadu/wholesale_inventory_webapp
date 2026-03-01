@@ -29,7 +29,8 @@ interface InvoiceModalProps {
 export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) {
 
   const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString("en-US", {
+    const d = iso.includes("T") ? new Date(iso) : new Date(iso + "T00:00");
+    return d.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -62,7 +63,7 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
             </div>
             <div className="text-right">
               <p className="text-sm font-medium">
-                Invoice #{order.id.toUpperCase()}
+                Invoice #{order.id.slice(0, 8).toUpperCase()}
               </p>
               <p className="text-sm text-muted-foreground">
                 {formatDate(order.created_at)}
