@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Store, LayoutDashboard, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, Store, LayoutDashboard, ClipboardList, ChevronLeft, ChevronRight, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/shops", label: "Shops", icon: Store },
   { href: "/orders", label: "Orders", icon: ClipboardList },
+  { href: "/audit-log", label: "Audit Log", icon: History },
 ];
 
 export function Sidebar() {
