@@ -86,6 +86,10 @@ export async function deleteItem(id: string) {
     .delete()
     .eq("id", id);
 
+  if (error?.code === "23503") {
+    return { error: { ...error, message: "Cannot delete an item that has been ordered." } };
+  }
+
   if (!error && item?.image && !item.image.startsWith("/")) {
     const marker = "/storage/v1/object/public/images/";
     const idx = item.image.indexOf(marker);

@@ -95,7 +95,7 @@ export function NewOrderFlow({
     setCart(
       cart.map((c) =>
         c.itemId === itemId
-          ? { ...c, quantity: Math.max(1, c.quantity + delta) }
+          ? { ...c, quantity: Math.max(1, Math.min(c.quantity + delta, c.maxStock ?? Infinity)) }
           : c
       )
     );
