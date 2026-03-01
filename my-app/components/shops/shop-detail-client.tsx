@@ -135,6 +135,9 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
         open={newOrderOpen}
         onClose={() => setNewOrderOpen(false)}
         shopName={shop.name}
+        shopId={shop.id}
+        items={items}
+        categories={categories}
       />
       <ShopFormModal
         open={editOpen}
