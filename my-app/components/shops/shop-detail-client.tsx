@@ -44,6 +44,10 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
     );
   };
 
+  const handleCall = () => {
+    window.open(`tel:${shop.phone}`);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto animate-fade-in-up">
       {/* Back link */}
@@ -71,6 +75,10 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
           >
             <Pencil className="w-4 h-4 mr-1.5" />
             Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCall}>
+            <Phone className="w-4 h-4 mr-1.5" />
+            Call
           </Button>
           <Button variant="outline" size="sm" onClick={handleNavigate}>
             <Navigation className="w-4 h-4 mr-1.5" />

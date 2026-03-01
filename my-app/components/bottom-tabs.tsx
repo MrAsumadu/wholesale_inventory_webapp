@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Grid3X3, Store, LayoutDashboard, ClipboardList } from "lucide-react";
+import { Package, Store, LayoutDashboard, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/categories", label: "Categories", icon: Grid3X3 },
   { href: "/shops", label: "Shops", icon: Store },
   { href: "/orders", label: "Orders", icon: ClipboardList },
 ];
