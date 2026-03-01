@@ -1,29 +1,44 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { updateTag, unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
+import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { InventoryItem, InventoryItemSlim } from "@/lib/types";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("inventory_items")
-    .select("*")
-    .order("name");
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (): Promise<InventoryItem[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("*")
+        .order("name");
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["inventory"],
+    { tags: ["inventory"] }
+  )();
 }
 
 export async function getInventoryItemsSlim(): Promise<InventoryItemSlim[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("inventory_items")
-    .select("id, name, price, quantity, category_id")
-    .order("name");
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (): Promise<InventoryItemSlim[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("id, name, price, quantity, category_id")
+        .order("name");
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["inventory-slim"],
+    { tags: ["inventory"] }
+  )();
 }
 
 export async function createItem(fields: {
@@ -48,8 +63,7 @@ export async function createItem(fields: {
     .select()
     .single();
 
-  revalidatePath("/inventory");
-  revalidatePath("/");
+  updateTag("inventory");
   return { data, error };
 }
 
@@ -67,8 +81,7 @@ export async function updateItem(id: string, fields: Partial<{
     .update(fields)
     .eq("id", id);
 
-  revalidatePath("/inventory");
-  revalidatePath("/");
+  updateTag("inventory");
   return { error };
 }
 
@@ -99,7 +112,6 @@ export async function deleteItem(id: string) {
     }
   }
 
-  revalidatePath("/inventory");
-  revalidatePath("/");
+  updateTag("inventory");
   return { error };
 }

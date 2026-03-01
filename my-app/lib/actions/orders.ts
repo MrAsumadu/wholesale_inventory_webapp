@@ -1,63 +1,99 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { updateTag, unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
+import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { Order, RecentOrder } from "@/lib/types";
 
 export async function getOrders(limit = 100): Promise<Order[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, line_items:order_line_items(*)")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (limit: number): Promise<Order[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, line_items:order_line_items(*)")
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["orders"],
+    { tags: ["orders"] }
+  )(limit);
 }
 
 export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select("id, shop_id, total, created_at, line_items:order_line_items(id)")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (limit: number): Promise<RecentOrder[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, shop_id, total, created_at, line_items:order_line_items(id)")
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["recent-orders"],
+    { tags: ["orders"] }
+  )(limit);
 }
 
 export async function getOrderStats(): Promise<{ count: number; totalRevenue: number }> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_order_stats");
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (): Promise<{ count: number; totalRevenue: number }> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase.rpc("get_order_stats");
 
-  if (error) throw error;
-  return {
-    count: data?.count ?? 0,
-    totalRevenue: data?.totalRevenue ?? 0,
-  };
+      if (error) throw error;
+      return {
+        count: data?.count ?? 0,
+        totalRevenue: data?.totalRevenue ?? 0,
+      };
+    },
+    ["order-stats"],
+    { tags: ["orders"] }
+  )();
 }
 
 export async function getShopOrders(shopId: string, limit = 100): Promise<Order[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*, line_items:order_line_items(*)")
-    .eq("shop_id", shopId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (shopId: string, limit: number): Promise<Order[]> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, line_items:order_line_items(*)")
+        .eq("shop_id", shopId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
-  if (error) throw error;
-  return data ?? [];
+      if (error) throw error;
+      return data ?? [];
+    },
+    ["shop-orders"],
+    { tags: ["orders", "shops"] }
+  )(shopId, limit);
 }
 
 export async function getOrderCountsByShop(): Promise<Record<string, number>> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_order_counts_by_shop");
+  const allCookies = (await cookies()).getAll();
+  return unstable_cache(
+    async (): Promise<Record<string, number>> => {
+      const supabase = createClientFromCookies(allCookies);
+      const { data, error } = await supabase.rpc("get_order_counts_by_shop");
 
-  if (error) throw error;
-  return (data as Record<string, number>) ?? {};
+      if (error) throw error;
+      return (data as Record<string, number>) ?? {};
+    },
+    ["order-counts"],
+    { tags: ["orders"] }
+  )();
 }
 
 export async function placeOrder(
@@ -75,10 +111,8 @@ export async function placeOrder(
     p_line_items: lineItems,
   });
 
-  revalidatePath("/orders");
-  revalidatePath("/inventory");
-  revalidatePath("/shops");
-  revalidatePath(`/shops/${shopId}`);
-  revalidatePath("/");
+  updateTag("orders");
+  updateTag("inventory");
+  updateTag("shops");
   return { data, error };
 }

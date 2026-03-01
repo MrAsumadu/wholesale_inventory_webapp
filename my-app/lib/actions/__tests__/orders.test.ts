@@ -5,12 +5,22 @@ const mockSupabase = {
   rpc: vi.fn(),
 };
 
+const mockCookies = [{ name: "sb-token", value: "test-token" }];
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockSupabase),
+  createClientFromCookies: vi.fn(() => mockSupabase),
 }));
 
+const mockUpdateTag = vi.fn();
+
 vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
+  updateTag: mockUpdateTag,
+  unstable_cache: (fn: Function) => fn,
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ getAll: () => mockCookies })),
 }));
 
 beforeEach(() => {
@@ -19,10 +29,11 @@ beforeEach(() => {
 
 describe("orders actions", () => {
   it("getOrders fetches orders with line_items ordered by created_at desc", async () => {
-    const mockOrder = vi.fn().mockResolvedValue({
+    const mockLimit = vi.fn().mockResolvedValue({
       data: [{ id: "o1", shop_id: "s1", line_items: [] }],
       error: null,
     });
+    const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
     const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
     mockSupabase.from.mockReturnValue({ select: mockSelect });
 
@@ -32,14 +43,16 @@ describe("orders actions", () => {
     expect(mockSupabase.from).toHaveBeenCalledWith("orders");
     expect(mockSelect).toHaveBeenCalledWith("*, line_items:order_line_items(*)");
     expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(mockLimit).toHaveBeenCalledWith(100);
     expect(result).toEqual([{ id: "o1", shop_id: "s1", line_items: [] }]);
   });
 
   it("getOrders throws on error", async () => {
-    const mockOrder = vi.fn().mockResolvedValue({
+    const mockLimit = vi.fn().mockResolvedValue({
       data: null,
       error: { message: "fail" },
     });
+    const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
     const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
     mockSupabase.from.mockReturnValue({ select: mockSelect });
 
@@ -47,11 +60,51 @@ describe("orders actions", () => {
     await expect(getOrders()).rejects.toEqual({ message: "fail" });
   });
 
+  it("getRecentOrders fetches with limit and slim select", async () => {
+    const mockLimit = vi.fn().mockResolvedValue({
+      data: [{ id: "o1", shop_id: "s1", total: 50, created_at: "2026-01-01", line_items: [{ id: "li1" }] }],
+      error: null,
+    });
+    const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+    const mockSelect = vi.fn().mockReturnValue({ order: mockOrder });
+    mockSupabase.from.mockReturnValue({ select: mockSelect });
+
+    const { getRecentOrders } = await import("../orders");
+    const result = await getRecentOrders(3);
+
+    expect(mockSelect).toHaveBeenCalledWith("id, shop_id, total, created_at, line_items:order_line_items(id)");
+    expect(mockLimit).toHaveBeenCalledWith(3);
+    expect(result).toHaveLength(1);
+  });
+
+  it("getOrderStats calls RPC and returns count and totalRevenue", async () => {
+    mockSupabase.rpc.mockResolvedValue({
+      data: { count: 10, totalRevenue: 500 },
+      error: null,
+    });
+
+    const { getOrderStats } = await import("../orders");
+    const result = await getOrderStats();
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("get_order_stats");
+    expect(result).toEqual({ count: 10, totalRevenue: 500 });
+  });
+
+  it("getOrderStats returns zeroes when data is null", async () => {
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+
+    const { getOrderStats } = await import("../orders");
+    const result = await getOrderStats();
+
+    expect(result).toEqual({ count: 0, totalRevenue: 0 });
+  });
+
   it("getShopOrders fetches orders filtered by shopId", async () => {
-    const mockOrder = vi.fn().mockResolvedValue({
+    const mockLimit = vi.fn().mockResolvedValue({
       data: [{ id: "o2", shop_id: "s1", line_items: [] }],
       error: null,
     });
+    const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
     const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
     const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ select: mockSelect });
@@ -63,14 +116,16 @@ describe("orders actions", () => {
     expect(mockSelect).toHaveBeenCalledWith("*, line_items:order_line_items(*)");
     expect(mockEq).toHaveBeenCalledWith("shop_id", "s1");
     expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(mockLimit).toHaveBeenCalledWith(100);
     expect(result).toEqual([{ id: "o2", shop_id: "s1", line_items: [] }]);
   });
 
   it("getShopOrders throws on error", async () => {
-    const mockOrder = vi.fn().mockResolvedValue({
+    const mockLimit = vi.fn().mockResolvedValue({
       data: null,
       error: { message: "shop fail" },
     });
+    const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
     const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
     const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ select: mockSelect });
@@ -79,7 +134,20 @@ describe("orders actions", () => {
     await expect(getShopOrders("s1")).rejects.toEqual({ message: "shop fail" });
   });
 
-  it("placeOrder calls rpc and revalidates paths", async () => {
+  it("getOrderCountsByShop calls RPC and returns record", async () => {
+    mockSupabase.rpc.mockResolvedValue({
+      data: { s1: 5, s2: 3 },
+      error: null,
+    });
+
+    const { getOrderCountsByShop } = await import("../orders");
+    const result = await getOrderCountsByShop();
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("get_order_counts_by_shop");
+    expect(result).toEqual({ s1: 5, s2: 3 });
+  });
+
+  it("placeOrder calls rpc and invalidates all relevant tags", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: "new-order-id", error: null });
 
     const { placeOrder } = await import("../orders");
@@ -93,6 +161,9 @@ describe("orders actions", () => {
       p_line_items: lineItems,
     });
     expect(result).toEqual({ data: "new-order-id", error: null });
+    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
+    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
+    expect(mockUpdateTag).toHaveBeenCalledWith("shops");
   });
 
   it("placeOrder returns error without throwing", async () => {

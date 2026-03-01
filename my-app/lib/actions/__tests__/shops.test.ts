@@ -4,12 +4,22 @@ const mockSupabase = {
   from: vi.fn(),
 };
 
+const mockCookies = [{ name: "sb-token", value: "test-token" }];
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockSupabase),
+  createClientFromCookies: vi.fn(() => mockSupabase),
 }));
 
+const mockUpdateTag = vi.fn();
+
 vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
+  updateTag: mockUpdateTag,
+  unstable_cache: (fn: Function) => fn,
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ getAll: () => mockCookies })),
 }));
 
 beforeEach(() => {
@@ -59,7 +69,7 @@ describe("shops actions", () => {
     expect(result).toBeNull();
   });
 
-  it("createShop inserts fields and revalidates", async () => {
+  it("createShop inserts fields and calls updateTag", async () => {
     const mockSingle = vi.fn().mockResolvedValue({ data: { id: "new" }, error: null });
     const mockSelectChain = vi.fn().mockReturnValue({ single: mockSingle });
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelectChain });
@@ -80,9 +90,10 @@ describe("shops actions", () => {
     expect(mockSupabase.from).toHaveBeenCalledWith("shops");
     expect(mockInsert).toHaveBeenCalledWith(fields);
     expect(result.error).toBeNull();
+    expect(mockUpdateTag).toHaveBeenCalledWith("shops");
   });
 
-  it("updateShop updates by id and revalidates", async () => {
+  it("updateShop updates by id and calls updateTag", async () => {
     const mockEq = vi.fn().mockResolvedValue({ error: null });
     const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ update: mockUpdate });
@@ -93,9 +104,10 @@ describe("shops actions", () => {
     expect(mockSupabase.from).toHaveBeenCalledWith("shops");
     expect(mockUpdate).toHaveBeenCalledWith({ name: "Updated Shop" });
     expect(mockEq).toHaveBeenCalledWith("id", "s1");
+    expect(mockUpdateTag).toHaveBeenCalledWith("shops");
   });
 
-  it("deleteShop deletes by id and revalidates", async () => {
+  it("deleteShop deletes by id and calls updateTag", async () => {
     const mockEq = vi.fn().mockResolvedValue({ error: null });
     const mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ delete: mockDelete });
@@ -105,5 +117,19 @@ describe("shops actions", () => {
 
     expect(mockSupabase.from).toHaveBeenCalledWith("shops");
     expect(mockEq).toHaveBeenCalledWith("id", "s1");
+    expect(mockUpdateTag).toHaveBeenCalledWith("shops");
+  });
+
+  it("deleteShop returns error for foreign key violation", async () => {
+    const mockEq = vi.fn().mockResolvedValue({
+      error: { code: "23503", message: "fk violation" },
+    });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
+    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+
+    const { deleteShop } = await import("../shops");
+    const result = await deleteShop("s1");
+
+    expect(result.error?.message).toBe("Cannot delete a shop that has orders.");
   });
 });
