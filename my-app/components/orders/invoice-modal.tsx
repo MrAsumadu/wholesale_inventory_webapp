@@ -16,7 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Printer } from "lucide-react";
+import { Package, FileDown } from "lucide-react";
+import { generateOrderPdf } from "@/lib/generate-order-pdf";
 import type { Order, Shop } from "@/lib/types";
 
 interface InvoiceModalProps {
@@ -37,8 +38,20 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
     });
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportPdf = () => {
+    generateOrderPdf({
+      lineItems: (order.line_items ?? []).map((li) => ({
+        item_name: li.item_name,
+        quantity: li.quantity,
+        unit_price: li.unit_price,
+      })),
+      total: order.total,
+      shop: shop
+        ? { name: shop.name, location: shop.location, phone: shop.phone }
+        : { name: "Unknown Shop", location: "", phone: "" },
+      orderId: order.id,
+      orderDate: order.created_at,
+    });
   };
 
   return (
@@ -129,10 +142,10 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
         </div>
 
         {/* Print button */}
-        <div className="flex justify-end pt-2 no-print">
-          <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleExportPdf}>
+            <FileDown className="w-4 h-4 mr-2" />
+            Export PDF
           </Button>
         </div>
       </DialogContent>
