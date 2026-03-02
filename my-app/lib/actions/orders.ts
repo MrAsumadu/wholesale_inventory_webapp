@@ -104,7 +104,8 @@ export async function placeOrder(
     item_name: string;
     quantity: number;
     unit_price: number;
-  }[]
+  }[],
+  shopName: string
 ) {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("place_order", {
@@ -117,7 +118,7 @@ export async function placeOrder(
       entityType: "order",
       entityId: String(data),
       action: "create",
-      newValues: { shop_id: shopId, line_items: lineItems } as Record<string, unknown>,
+      newValues: { shop_id: shopId, shop_name: shopName, line_items: lineItems } as Record<string, unknown>,
     });
   }
 
