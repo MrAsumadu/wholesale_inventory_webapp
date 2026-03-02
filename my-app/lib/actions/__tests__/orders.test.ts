@@ -154,7 +154,7 @@ describe("orders actions", () => {
     const lineItems = [
       { item_id: "i1", item_name: "Widget", quantity: 5, unit_price: 10 },
     ];
-    const result = await placeOrder("s1", lineItems);
+    const result = await placeOrder("s1", lineItems, "Test Shop");
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith("place_order", {
       p_shop_id: "s1",
@@ -170,7 +170,7 @@ describe("orders actions", () => {
     mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: "rpc fail" } });
 
     const { placeOrder } = await import("../orders");
-    const result = await placeOrder("s1", []);
+    const result = await placeOrder("s1", [], "Test Shop");
 
     expect(result.error).toEqual({ message: "rpc fail" });
   });

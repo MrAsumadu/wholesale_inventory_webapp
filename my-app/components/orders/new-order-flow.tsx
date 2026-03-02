@@ -140,7 +140,7 @@ export function NewOrderFlow({
       unit_price: c.unitPrice,
     }));
     startTransition(async () => {
-      const result = await placeOrder(shopId, lineItems);
+      const result = await placeOrder(shopId, lineItems, shopName);
       if (result.error) {
         setError(result.error.message ?? "Failed to place order. Stock may be insufficient.");
       } else {
