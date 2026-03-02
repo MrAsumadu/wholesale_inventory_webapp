@@ -46,14 +46,15 @@ function actionBadgeVariant(action: AuditAction) {
   }
 }
 
-function actionLabel(action: AuditAction) {
+function actionLabel(action: AuditAction, entityType?: AuditEntityType) {
+  if (entityType === "order" && action === "create") return "Sold";
   switch (action) {
     case "create":
-      return "Created";
+      return "Added";
     case "update":
       return "Updated";
     case "delete":
-      return "Deleted";
+      return "Removed";
   }
 }
 
@@ -88,16 +89,20 @@ function formatTimestamp(iso: string) {
 }
 
 function summarizeChanges(log: AuditLog): string {
-  if (log.action === "create" && log.new_values) {
-    const name =
-      (log.new_values as Record<string, unknown>).name ??
-      (log.new_values as Record<string, unknown>).item_name;
-    if (name) return `Created "${name}"`;
+  const vals = (log.new_values ?? log.old_values) as Record<string, unknown> | null;
+  const name = vals?.name ?? vals?.item_name;
+
+  if (log.action === "create") {
+    if (log.entity_type === "order") {
+      const shopName = (log.new_values as Record<string, unknown>)?.shop_name;
+      if (shopName) return `Sold to "${shopName}"`;
+      return "Sold";
+    }
+    if (name) return `Added "${name}"`;
     return "New record";
   }
-  if (log.action === "delete" && log.old_values) {
-    const name = (log.old_values as Record<string, unknown>).name;
-    if (name) return `Deleted "${name}"`;
+  if (log.action === "delete") {
+    if (name) return `Removed "${name}"`;
     return "Record removed";
   }
   if (log.action === "update" && log.new_values) {
@@ -255,7 +260,7 @@ export function AuditLogClient() {
                             className="gap-1"
                           >
                             {actionIcon(log.action)}
-                            {actionLabel(log.action)}
+                            {actionLabel(log.action, log.entity_type)}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
@@ -283,7 +288,7 @@ export function AuditLogClient() {
                         className="gap-1"
                       >
                         {actionIcon(log.action)}
-                        {actionLabel(log.action)}
+                        {actionLabel(log.action, log.entity_type)}
                       </Badge>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {formatTimestamp(log.created_at)}
