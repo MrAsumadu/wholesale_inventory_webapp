@@ -13,7 +13,7 @@ import {
   TrendingUp,
   History,
 } from "lucide-react";
-import type { Category, InventoryItemSlim, Shop, RecentOrder, AuditLog, AuditEntityType, AuditAction } from "@/lib/types";
+import type { Category, InventoryItemSlim, Shop, RecentOrder, AuditLog, AuditAction } from "@/lib/types";
 
 interface DashboardClientProps {
   categories: Category[];
@@ -32,13 +32,31 @@ function actionDotColor(action: AuditAction) {
   }
 }
 
-function activityEntityLabel(type: AuditEntityType): string {
-  return {
-    category: "Category",
-    inventory_item: "Inventory Item",
-    shop: "Shop",
-    order: "Order",
-  }[type];
+function activityDescription(log: AuditLog): string {
+  const vals = (log.new_values ?? log.old_values) as Record<string, unknown> | null;
+  const name = vals?.name ?? vals?.item_name;
+  const entityLabel = {
+    category: "category",
+    inventory_item: "item",
+    shop: "shop",
+    order: "order",
+  }[log.entity_type];
+
+  if (log.action === "create") {
+    if (log.entity_type === "order") {
+      const shopName = (log.new_values as Record<string, unknown>)?.shop_name;
+      if (shopName) return `Sold to ${shopName}`;
+      return "Sold order";
+    }
+    if (name) return `Added ${name}`;
+    return `Added ${entityLabel}`;
+  }
+  if (log.action === "delete") {
+    if (name) return `Removed ${name}`;
+    return `Removed ${entityLabel}`;
+  }
+  if (name) return `Updated ${name}`;
+  return `Updated ${entityLabel}`;
 }
 
 function formatRelativeTime(iso: string) {
@@ -372,12 +390,7 @@ export function DashboardClient({
                     />
                     <div>
                       <p className="text-sm font-medium">
-                        {log.action === "create"
-                          ? "Created"
-                          : log.action === "update"
-                          ? "Updated"
-                          : "Deleted"}{" "}
-                        {activityEntityLabel(log.entity_type)}
+                        {activityDescription(log)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {log.user_email} &middot;{" "}
