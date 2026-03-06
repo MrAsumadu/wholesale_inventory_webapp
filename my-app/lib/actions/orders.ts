@@ -140,11 +140,15 @@ export async function confirmOrder(orderId: string) {
 
 export async function cancelOrder(orderId: string) {
   const supabase = await createClient();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("orders")
-    .delete()
+    .delete({ count: "exact" })
     .eq("id", orderId)
     .eq("status", "pending");
+
+  if (!error && count === 0) {
+    return { error: { message: "Order not found or is not pending." } };
+  }
 
   updateTag("orders");
   return { error };

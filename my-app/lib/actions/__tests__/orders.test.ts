@@ -72,7 +72,7 @@ describe("orders actions", () => {
     const { getRecentOrders } = await import("../orders");
     const result = await getRecentOrders(3);
 
-    expect(mockSelect).toHaveBeenCalledWith("id, shop_id, total, created_at, line_items:order_line_items(id)");
+    expect(mockSelect).toHaveBeenCalledWith("id, shop_id, total, status, created_at, line_items:order_line_items(id)");
     expect(mockLimit).toHaveBeenCalledWith(3);
     expect(result).toHaveLength(1);
   });
@@ -162,8 +162,6 @@ describe("orders actions", () => {
     });
     expect(result).toEqual({ data: "new-order-id", error: null });
     expect(mockUpdateTag).toHaveBeenCalledWith("orders");
-    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
-    expect(mockUpdateTag).toHaveBeenCalledWith("shops");
   });
 
   it("placeOrder returns error without throwing", async () => {
@@ -173,5 +171,128 @@ describe("orders actions", () => {
     const result = await placeOrder("s1", []);
 
     expect(result.error).toEqual({ message: "rpc fail" });
+  });
+
+  it("confirmOrder calls rpc and invalidates orders + inventory tags", async () => {
+    mockSupabase.rpc.mockResolvedValue({ error: null });
+
+    const { confirmOrder } = await import("../orders");
+    const result = await confirmOrder("order-1");
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("confirm_order", {
+      p_order_id: "order-1",
+    });
+    expect(result).toEqual({ error: null });
+    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
+    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
+  });
+
+  it("confirmOrder returns error from rpc", async () => {
+    mockSupabase.rpc.mockResolvedValue({ error: { message: "already confirmed" } });
+
+    const { confirmOrder } = await import("../orders");
+    const result = await confirmOrder("order-1");
+
+    expect(result.error).toEqual({ message: "already confirmed" });
+  });
+
+  it("cancelOrder deletes pending order and invalidates orders tag", async () => {
+    const mockEq2 = vi.fn().mockResolvedValue({ error: null, count: 1 });
+    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq1 });
+    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+
+    const { cancelOrder } = await import("../orders");
+    const result = await cancelOrder("order-2");
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("orders");
+    expect(mockDelete).toHaveBeenCalledWith({ count: "exact" });
+    expect(mockEq1).toHaveBeenCalledWith("id", "order-2");
+    expect(mockEq2).toHaveBeenCalledWith("status", "pending");
+    expect(result).toEqual({ error: null });
+    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
+  });
+
+  it("cancelOrder returns error when order not found or not pending", async () => {
+    const mockEq2 = vi.fn().mockResolvedValue({ error: null, count: 0 });
+    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq1 });
+    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+
+    const { cancelOrder } = await import("../orders");
+    const result = await cancelOrder("order-2");
+
+    expect(result.error).toEqual({ message: "Order not found or is not pending." });
+  });
+
+  it("cancelOrder returns error on db failure", async () => {
+    const mockEq2 = vi.fn().mockResolvedValue({ error: { message: "db error" }, count: null });
+    const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
+    const mockDelete = vi.fn().mockReturnValue({ eq: mockEq1 });
+    mockSupabase.from.mockReturnValue({ delete: mockDelete });
+
+    const { cancelOrder } = await import("../orders");
+    const result = await cancelOrder("order-2");
+
+    expect(result.error).toEqual({ message: "db error" });
+  });
+
+  it("updatePendingOrder calls rpc with order id and line items", async () => {
+    mockSupabase.rpc.mockResolvedValue({ error: null });
+
+    const { updatePendingOrder } = await import("../orders");
+    const lineItems = [
+      { item_id: "i1", item_name: "Widget", quantity: 3, unit_price: 15 },
+    ];
+    const result = await updatePendingOrder("order-3", lineItems);
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("update_pending_order", {
+      p_order_id: "order-3",
+      p_line_items: lineItems,
+    });
+    expect(result).toEqual({ error: null });
+    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
+  });
+
+  it("updatePendingOrder returns error on failure", async () => {
+    mockSupabase.rpc.mockResolvedValue({ error: { message: "update failed" } });
+
+    const { updatePendingOrder } = await import("../orders");
+    const result = await updatePendingOrder("order-3", []);
+
+    expect(result.error).toEqual({ message: "update failed" });
+  });
+
+  it("getOrderById returns order when found", async () => {
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: { id: "o1", shop_id: "s1", line_items: [] },
+      error: null,
+    });
+    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    mockSupabase.from.mockReturnValue({ select: mockSelect });
+
+    const { getOrderById } = await import("../orders");
+    const result = await getOrderById("o1");
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("orders");
+    expect(mockSelect).toHaveBeenCalledWith("*, line_items:order_line_items(*)");
+    expect(mockEq).toHaveBeenCalledWith("id", "o1");
+    expect(result).toEqual({ id: "o1", shop_id: "s1", line_items: [] });
+  });
+
+  it("getOrderById returns null on error", async () => {
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: "not found" },
+    });
+    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    mockSupabase.from.mockReturnValue({ select: mockSelect });
+
+    const { getOrderById } = await import("../orders");
+    const result = await getOrderById("nonexistent");
+
+    expect(result).toBeNull();
   });
 });
