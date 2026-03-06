@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Store, LayoutDashboard, ClipboardList } from "lucide-react";
+import { Package, Store, LayoutDashboard, ClipboardList, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/inventory", label: "Inventory", icon: Package },
+  { href: "/products", label: "Products", icon: ShoppingBag },
   { href: "/shops", label: "Shops", icon: Store },
   { href: "/orders", label: "Orders", icon: ClipboardList },
 ];
