@@ -6,6 +6,7 @@ import { Search, ShoppingBag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
+import { OrderReviewSheet } from "@/components/products/order-review-sheet";
 import type { InventoryItem, Category, Shop } from "@/lib/types";
 
 interface CartItem {
@@ -270,6 +271,22 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
             </div>
           </div>
         </div>
+      )}
+
+      {/* Order review sheet */}
+      {orderMode && shop && (
+        <OrderReviewSheet
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          cart={cart}
+          items={items}
+          shop={shop}
+          total={cartTotal}
+          onOrderPlaced={() => {
+            setCart([]);
+            router.push("/products");
+          }}
+        />
       )}
     </div>
   );
