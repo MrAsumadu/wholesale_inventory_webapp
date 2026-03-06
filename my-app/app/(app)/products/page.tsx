@@ -1,13 +1,22 @@
 import { getInventoryItems } from "@/lib/actions/inventory";
 import { getCategories } from "@/lib/actions/categories";
 import { getShops } from "@/lib/actions/shops";
+import { getOrderById } from "@/lib/actions/orders";
 import { ProductsClient } from "@/components/products/products-client";
 
-export default async function ProductsPage() {
+interface ProductsPageProps {
+  searchParams: Promise<{ edit?: string }>;
+}
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const params = await searchParams;
   const [items, categories, shops] = await Promise.all([
     getInventoryItems(),
     getCategories(),
     getShops(),
   ]);
-  return <ProductsClient items={items} categories={categories} shops={shops} />;
+
+  const editOrder = params.edit ? await getOrderById(params.edit) : null;
+
+  return <ProductsClient items={items} categories={categories} shops={shops} editOrder={editOrder} />;
 }

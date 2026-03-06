@@ -5,6 +5,18 @@ import { cookies } from "next/headers";
 import { createClient, createClientFromCookies } from "@/lib/supabase/server";
 import type { Order, RecentOrder } from "@/lib/types";
 
+export async function getOrderById(orderId: string): Promise<Order | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*, line_items:order_line_items(*)")
+    .eq("id", orderId)
+    .single();
+
+  if (error) return null;
+  return data;
+}
+
 export async function getOrders(limit = 100): Promise<Order[]> {
   const allCookies = (await cookies()).getAll();
   return unstable_cache(
@@ -31,7 +43,7 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
       const supabase = createClientFromCookies(allCookies);
       const { data, error } = await supabase
         .from("orders")
-        .select("id, shop_id, total, created_at, line_items:order_line_items(id)")
+        .select("id, shop_id, total, status, created_at, line_items:order_line_items(id)")
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -112,7 +124,47 @@ export async function placeOrder(
   });
 
   updateTag("orders");
-  updateTag("inventory");
-  updateTag("shops");
   return { data, error };
+}
+
+export async function confirmOrder(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("confirm_order", {
+    p_order_id: orderId,
+  });
+
+  updateTag("orders");
+  updateTag("inventory");
+  return { error };
+}
+
+export async function cancelOrder(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", orderId)
+    .eq("status", "pending");
+
+  updateTag("orders");
+  return { error };
+}
+
+export async function updatePendingOrder(
+  orderId: string,
+  lineItems: {
+    item_id: string;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+  }[]
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_pending_order", {
+    p_order_id: orderId,
+    p_line_items: lineItems,
+  });
+
+  updateTag("orders");
+  return { error };
 }

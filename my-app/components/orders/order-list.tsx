@@ -66,14 +66,26 @@ export function OrderList({ orders, shop }: OrderListProps) {
                   </p>
                 </div>
               </div>
-              <Badge variant="secondary" className="tabular-nums font-medium">
-                £{order.total.toFixed(2)}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className={`text-xs ${
+                    order.status === "pending"
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                  }`}
+                >
+                  {order.status === "pending" ? "Pending" : "Completed"}
+                </Badge>
+                <Badge variant="secondary" className="tabular-nums font-medium">
+                  £{order.total.toFixed(2)}
+                </Badge>
+              </div>
             </button>
 
             {expanded && (
               <div className="border-t border-border animate-fade-in-up">
-                <OrderDetail order={order} shop={shop} />
+                <OrderDetail order={order} shop={shop} onOrderChanged={() => {}} />
               </div>
             )}
           </div>

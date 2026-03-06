@@ -11,7 +11,7 @@ import {
   Loader2,
   FileDown,
 } from "lucide-react";
-import { placeOrder } from "@/lib/actions/orders";
+import { placeOrder, updatePendingOrder } from "@/lib/actions/orders";
 import { generateOrderPdf } from "@/lib/generate-order-pdf";
 import type { InventoryItem, Shop } from "@/lib/types";
 
@@ -29,6 +29,7 @@ interface OrderReviewSheetProps {
   items: InventoryItem[];
   shop: Shop;
   total: number;
+  editOrderId?: string | null;
   onOrderPlaced: () => void;
 }
 
@@ -39,6 +40,7 @@ export function OrderReviewSheet({
   items,
   shop,
   total,
+  editOrderId,
   onOrderPlaced,
 }: OrderReviewSheetProps) {
   const router = useRouter();
@@ -66,17 +68,30 @@ export function OrderReviewSheet({
 
   const shopInfo = { name: shop.name, location: shop.location, phone: shop.phone };
 
+  const isEditing = !!editOrderId;
+
   const handlePlaceOrder = () => {
     setError(null);
     startTransition(async () => {
-      const result = await placeOrder(shop.id, lineItems);
-      if (result.error) {
-        setError(result.error.message ?? "Failed to place order.");
+      if (isEditing) {
+        const result = await updatePendingOrder(editOrderId!, lineItems);
+        if (result.error) {
+          setError(result.error.message ?? "Failed to update order.");
+        } else {
+          setOrderId(editOrderId);
+          setConfirmed(true);
+          router.refresh();
+        }
       } else {
-        const id = typeof result.data === "string" ? result.data : null;
-        setOrderId(id);
-        setConfirmed(true);
-        router.refresh();
+        const result = await placeOrder(shop.id, lineItems);
+        if (result.error) {
+          setError(result.error.message ?? "Failed to place order.");
+        } else {
+          const id = typeof result.data === "string" ? result.data : null;
+          setOrderId(id);
+          setConfirmed(true);
+          router.refresh();
+        }
       }
     });
   };
@@ -127,11 +142,16 @@ export function OrderReviewSheet({
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-display text-xl mb-2">Order placed successfully</h3>
+            <h3 className="font-display text-xl mb-2">
+              {isEditing ? "Order updated" : "Order created"}
+            </h3>
             <p className="text-muted-foreground text-sm mb-1">
               {cart.reduce((s, c) => s + c.quantity, 0)} items totaling £{total.toFixed(2)}
             </p>
             <p className="text-muted-foreground/70 text-xs">Order for {shop.name}</p>
+            <p className="text-muted-foreground text-xs mt-2">
+              This order is pending. Confirm it in the Orders page to deduct stock.
+            </p>
             <div className="flex gap-2 mt-6">
               <Button variant="outline" onClick={() => handleExportPdf(false)}>
                 <FileDown className="w-4 h-4 mr-2" />
@@ -186,9 +206,9 @@ export function OrderReviewSheet({
                 <span className="text-base font-semibold tabular-nums">Total: £{total.toFixed(2)}</span>
               </div>
 
-              <div className="flex items-center gap-2 p-3 mt-4 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 text-sm">
+              <div className="flex items-center gap-2 p-3 mt-4 rounded-lg border border-blue-300/50 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>This action cannot be undone. Stock will be deducted immediately.</span>
+                <span>This will create a pending order. Stock will be deducted when you confirm it in the Orders page.</span>
               </div>
             </div>
 
@@ -207,10 +227,10 @@ export function OrderReviewSheet({
                 {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Placing Order...
+                    {isEditing ? "Updating..." : "Creating Order..."}
                   </>
                 ) : (
-                  "Place Order"
+                  isEditing ? "Update Order" : "Create Order"
                 )}
               </Button>
             </div>
