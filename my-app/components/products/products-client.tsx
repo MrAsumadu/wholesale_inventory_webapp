@@ -44,12 +44,19 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
   useEffect(() => {
     if (editOrder?.line_items && editOrder.line_items.length > 0 && cart.length === 0) {
       setCart(
-        editOrder.line_items.map((li) => ({
-          itemId: li.item_id,
-          quantity: li.quantity,
-          unitPrice: li.unit_price,
-          discount: 0,
-        }))
+        editOrder.line_items.map((li) => {
+          const catalogItem = items.find((i) => i.id === li.item_id);
+          const catalogPrice = catalogItem?.price ?? li.unit_price;
+          const discount = li.unit_price < catalogPrice
+            ? Math.round((1 - li.unit_price / catalogPrice) * 100)
+            : 0;
+          return {
+            itemId: li.item_id,
+            quantity: li.quantity,
+            unitPrice: catalogPrice,
+            discount,
+          };
+        })
       );
     }
   }, [editOrder]);
@@ -103,7 +110,9 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
   };
 
   const setQuantity = (itemId: string, quantity: number) => {
-    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, quantity } : c)));
+    const item = items.find((i) => i.id === itemId);
+    const clamped = Math.max(1, Math.min(quantity, item?.quantity ?? Infinity));
+    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, quantity: clamped } : c)));
   };
 
   const updatePrice = (itemId: string, price: string) => {
