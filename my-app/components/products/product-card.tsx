@@ -19,6 +19,7 @@ interface ProductCardProps {
   cartData?: CartItemData;
   onAddToCart?: () => void;
   onUpdateQuantity?: (delta: number) => void;
+  onSetQuantity?: (quantity: number) => void;
   onUpdatePrice?: (price: string) => void;
   onUpdateDiscount?: (discount: string) => void;
   onRemove?: () => void;
@@ -31,6 +32,7 @@ export function ProductCard({
   cartData,
   onAddToCart,
   onUpdateQuantity,
+  onSetQuantity,
   onUpdatePrice,
   onUpdateDiscount,
   onRemove,
@@ -122,9 +124,19 @@ export function ProductCard({
               >
                 <Minus className="w-3 h-3" />
               </Button>
-              <span className="flex-1 text-center text-sm tabular-nums font-medium">
-                {cartData.quantity}
-              </span>
+              <Input
+                type="number"
+                min="1"
+                max={item.quantity}
+                value={cartData.quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val) && val >= 1 && val <= item.quantity) {
+                    onSetQuantity?.(val);
+                  }
+                }}
+                className="h-7 flex-1 text-center text-sm tabular-nums font-medium px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
               <Button
                 variant="outline"
                 size="icon"
