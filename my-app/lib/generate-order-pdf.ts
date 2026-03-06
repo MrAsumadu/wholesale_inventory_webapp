@@ -48,7 +48,7 @@ export function generateOrderPdf({
   // --- Header ---
   doc.setFontSize(20);
   doc.setTextColor(41, 37, 36);
-  doc.text("Shahjalal Inventory", 14, 22);
+  doc.text("Shahjalal Wholesale", 14, 22);
 
   doc.setFontSize(14);
   doc.setTextColor(100, 100, 100);
