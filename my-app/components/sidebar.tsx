@@ -27,7 +27,7 @@ export function Sidebar() {
     <aside
       className={cn(
         "hidden md:flex flex-col border-r border-border bg-sidebar h-screen sticky top-0 transition-all duration-200 ease-in-out",
-        collapsed ? "w-[72px]" : "w-[240px]"
+        collapsed ? "w-[72px]" : "w-[280px]"
       )}
     >
       {/* Logo */}
