@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -14,19 +15,16 @@ import {
   Pencil,
 } from "lucide-react";
 import { OrderList } from "@/components/orders/order-list";
-import { NewOrderFlow } from "@/components/orders/new-order-flow";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
-import type { Shop, Order, InventoryItemSlim, Category } from "@/lib/types";
+import type { Shop, Order } from "@/lib/types";
 
 interface ShopDetailClientProps {
   shop: Shop;
   orders: Order[];
-  items: InventoryItemSlim[];
-  categories: Category[];
 }
 
-export function ShopDetailClient({ shop, orders, items, categories }: ShopDetailClientProps) {
-  const [newOrderOpen, setNewOrderOpen] = useState(false);
+export function ShopDetailClient({ shop, orders }: ShopDetailClientProps) {
+  const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
 
   const formatTime = (time: string) => {
@@ -128,7 +126,7 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xl text-foreground">Orders</h2>
         <Button
-          onClick={() => setNewOrderOpen(true)}
+          onClick={() => router.push(`/products?shop=${shop.id}&mode=order`)}
           className="bg-primary hover:bg-primary/90"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -139,16 +137,6 @@ export function ShopDetailClient({ shop, orders, items, categories }: ShopDetail
       <OrderList orders={orders} shop={shop} />
 
       {/* Modals */}
-      <NewOrderFlow
-        open={newOrderOpen}
-        onClose={() => setNewOrderOpen(false)}
-        shopName={shop.name}
-        shopId={shop.id}
-        shopLocation={shop.location}
-        shopPhone={shop.phone}
-        items={items}
-        categories={categories}
-      />
       <ShopFormModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
