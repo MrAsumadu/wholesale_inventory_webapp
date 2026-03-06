@@ -102,6 +102,10 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
     ));
   };
 
+  const setQuantity = (itemId: string, quantity: number) => {
+    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, quantity } : c)));
+  };
+
   const updatePrice = (itemId: string, price: string) => {
     const num = parseFloat(price);
     if (isNaN(num) || num < 0) return;
@@ -258,6 +262,7 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
                     cartData={cd ? { quantity: cd.quantity, unitPrice: cd.unitPrice, discount: cd.discount } : undefined}
                     onAddToCart={() => addToCart(item)}
                     onUpdateQuantity={(delta) => updateQuantity(item.id, delta)}
+                    onSetQuantity={(qty) => setQuantity(item.id, qty)}
                     onUpdatePrice={(price) => updatePrice(item.id, price)}
                     onUpdateDiscount={(discount) => updateDiscount(item.id, discount)}
                     onRemove={() => removeFromCart(item.id)}
