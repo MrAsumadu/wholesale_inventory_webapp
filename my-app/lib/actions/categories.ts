@@ -1,26 +1,17 @@
 "use server";
 
-import { updateTag, unstable_cache } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient, createClientFromCookies } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/types";
 
 export async function getCategories(): Promise<Category[]> {
-  const allCookies = (await cookies()).getAll();
-  return unstable_cache(
-    async (): Promise<Category[]> => {
-      const supabase = createClientFromCookies(allCookies);
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("name");
 
-      if (error) throw error;
-      return data ?? [];
-    },
-    ["categories"],
-    { tags: ["categories"] }
-  )();
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function createCategory(fields: { name: string; image?: string }) {
@@ -31,7 +22,6 @@ export async function createCategory(fields: { name: string; image?: string }) {
     .select()
     .single();
 
-  updateTag("categories");
   return { data, error };
 }
 
@@ -42,7 +32,6 @@ export async function updateCategory(id: string, fields: { name?: string; image?
     .update(fields)
     .eq("id", id);
 
-  updateTag("categories");
   return { error };
 }
 
@@ -73,6 +62,5 @@ export async function deleteCategory(id: string) {
     }
   }
 
-  updateTag("categories");
   return { error };
 }
