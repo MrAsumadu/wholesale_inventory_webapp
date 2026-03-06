@@ -105,8 +105,8 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="text-xs">Item</TableHead>
-                <TableHead className="text-xs text-right">Qty</TableHead>
-                <TableHead className="text-xs text-right">
+                <TableHead className="text-xs text-right border-x border-border">Qty</TableHead>
+                <TableHead className="text-xs text-right border-x border-border">
                   Unit Price
                 </TableHead>
                 <TableHead className="text-xs text-right">Subtotal</TableHead>
@@ -116,10 +116,10 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
               {(order.line_items ?? []).map((line) => (
                 <TableRow key={line.id} className="hover:bg-transparent">
                   <TableCell className="text-sm">{line.item_name}</TableCell>
-                  <TableCell className="text-sm text-right tabular-nums">
+                  <TableCell className="text-sm text-right tabular-nums border-x border-border">
                     {line.quantity}
                   </TableCell>
-                  <TableCell className="text-sm text-right tabular-nums">
+                  <TableCell className="text-sm text-right tabular-nums border-x border-border">
                     £{line.unit_price.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-sm text-right tabular-nums font-medium">
