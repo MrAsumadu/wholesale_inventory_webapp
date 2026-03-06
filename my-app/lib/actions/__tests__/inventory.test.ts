@@ -5,22 +5,8 @@ const mockSupabase = {
   storage: { from: vi.fn() },
 };
 
-const mockCookies = [{ name: "sb-token", value: "test-token" }];
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockSupabase),
-  createClientFromCookies: vi.fn(() => mockSupabase),
-}));
-
-const mockUpdateTag = vi.fn();
-
-vi.mock("next/cache", () => ({
-  updateTag: mockUpdateTag,
-  unstable_cache: (fn: Function) => fn,
-}));
-
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ getAll: () => mockCookies })),
 }));
 
 beforeEach(() => {
@@ -67,7 +53,7 @@ describe("inventory actions", () => {
     expect(result).toEqual([{ id: "1", name: "Apples", price: 2.5, quantity: 50, category_id: "c1" }]);
   });
 
-  it("createItem inserts with correct fields and calls updateTag", async () => {
+  it("createItem inserts with correct fields", async () => {
     const mockSingle = vi.fn().mockResolvedValue({ data: { id: "new" }, error: null });
     const mockSelectChain = vi.fn().mockReturnValue({ single: mockSingle });
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelectChain });
@@ -92,7 +78,6 @@ describe("inventory actions", () => {
     });
     expect(result.data).toEqual({ id: "new" });
     expect(result.error).toBeNull();
-    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
   });
 
   it("createItem passes optional expiration_date and image", async () => {
@@ -121,7 +106,7 @@ describe("inventory actions", () => {
     });
   });
 
-  it("updateItem updates by id and calls updateTag", async () => {
+  it("updateItem updates by id", async () => {
     const mockEq = vi.fn().mockResolvedValue({ error: null });
     const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ update: mockUpdate });
@@ -132,10 +117,9 @@ describe("inventory actions", () => {
     expect(mockSupabase.from).toHaveBeenCalledWith("inventory_items");
     expect(mockUpdate).toHaveBeenCalledWith({ name: "Updated", price: 3.0 });
     expect(mockEq).toHaveBeenCalledWith("id", "item-1");
-    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
   });
 
-  it("deleteItem deletes by id and calls updateTag", async () => {
+  it("deleteItem deletes by id", async () => {
     const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
     const mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
     const mockSelectSingle = vi.fn().mockResolvedValue({ data: { image: "/placeholder-item.svg" } });
@@ -154,7 +138,6 @@ describe("inventory actions", () => {
 
     expect(mockSupabase.from).toHaveBeenCalledWith("inventory_items");
     expect(mockDeleteEq).toHaveBeenCalledWith("id", "item-1");
-    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
   });
 
   it("deleteItem returns error for foreign key violation", async () => {

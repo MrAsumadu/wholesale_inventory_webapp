@@ -5,22 +5,8 @@ const mockSupabase = {
   storage: { from: vi.fn() },
 };
 
-const mockCookies = [{ name: "sb-token", value: "test-token" }];
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockSupabase),
-  createClientFromCookies: vi.fn(() => mockSupabase),
-}));
-
-const mockUpdateTag = vi.fn();
-
-vi.mock("next/cache", () => ({
-  updateTag: mockUpdateTag,
-  unstable_cache: (fn: Function) => fn,
-}));
-
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ getAll: () => mockCookies })),
 }));
 
 beforeEach(() => {
@@ -62,7 +48,7 @@ describe("categories actions", () => {
     await expect(getCategories()).rejects.toThrow("DB error");
   });
 
-  it("createCategory inserts and calls updateTag", async () => {
+  it("createCategory inserts with correct fields", async () => {
     const mockSingle = vi.fn().mockResolvedValue({ data: { id: "new" }, error: null });
     const mockSelectChain = vi.fn().mockReturnValue({ single: mockSingle });
     const mockInsert = vi.fn().mockReturnValue({ select: mockSelectChain });
@@ -73,7 +59,6 @@ describe("categories actions", () => {
 
     expect(mockInsert).toHaveBeenCalledWith({ name: "Test", image: "/placeholder-item.svg" });
     expect(result.error).toBeNull();
-    expect(mockUpdateTag).toHaveBeenCalledWith("categories");
   });
 
   it("createCategory uses provided image", async () => {
@@ -88,7 +73,7 @@ describe("categories actions", () => {
     expect(mockInsert).toHaveBeenCalledWith({ name: "Test", image: "/custom.png" });
   });
 
-  it("updateCategory updates by id and calls updateTag", async () => {
+  it("updateCategory updates by id", async () => {
     const mockEq = vi.fn().mockResolvedValue({ error: null });
     const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
     mockSupabase.from.mockReturnValue({ update: mockUpdate });
@@ -98,10 +83,9 @@ describe("categories actions", () => {
 
     expect(mockUpdate).toHaveBeenCalledWith({ name: "Updated" });
     expect(mockEq).toHaveBeenCalledWith("id", "test-id");
-    expect(mockUpdateTag).toHaveBeenCalledWith("categories");
   });
 
-  it("deleteCategory deletes by id and calls updateTag", async () => {
+  it("deleteCategory deletes by id", async () => {
     const mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
     const mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
     const mockSelectSingle = vi.fn().mockResolvedValue({ data: { image: "/placeholder-item.svg" } });
@@ -120,7 +104,6 @@ describe("categories actions", () => {
 
     expect(mockSupabase.from).toHaveBeenCalledWith("categories");
     expect(mockDeleteEq).toHaveBeenCalledWith("id", "test-id");
-    expect(mockUpdateTag).toHaveBeenCalledWith("categories");
   });
 
   it("deleteCategory returns error for foreign key violation", async () => {
