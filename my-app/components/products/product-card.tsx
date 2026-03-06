@@ -125,14 +125,17 @@ export function ProductCard({
                 <Minus className="w-3 h-3" />
               </Button>
               <Input
+                key={`qty-${cartData.quantity}`}
                 type="number"
                 min="1"
                 max={item.quantity}
-                value={cartData.quantity}
-                onChange={(e) => {
+                defaultValue={cartData.quantity}
+                onBlur={(e) => {
                   const val = parseInt(e.target.value, 10);
                   if (!isNaN(val) && val >= 1 && val <= item.quantity) {
                     onSetQuantity?.(val);
+                  } else {
+                    e.target.value = String(cartData.quantity);
                   }
                 }}
                 className="h-7 flex-1 text-center text-sm tabular-nums font-medium px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -153,22 +156,38 @@ export function ProductCard({
               <div className="relative flex-1">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">£</span>
                 <Input
+                  key={`price-${cartData.unitPrice}-${cartData.discount}`}
                   type="number"
                   step="0.01"
                   min="0"
-                  value={+(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
-                  onChange={(e) => onUpdatePrice?.(e.target.value)}
+                  defaultValue={+(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
+                  onBlur={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (isNaN(num) || num < 0) {
+                      e.target.value = (cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2);
+                      return;
+                    }
+                    onUpdatePrice?.(e.target.value);
+                  }}
                   className="h-7 pl-5 text-xs tabular-nums"
                 />
               </div>
               <div className="relative w-16">
                 <Input
+                  key={`disc-${cartData.discount}`}
                   type="number"
                   step="1"
                   min="0"
                   max="100"
-                  value={cartData.discount}
-                  onChange={(e) => onUpdateDiscount?.(e.target.value)}
+                  defaultValue={cartData.discount}
+                  onBlur={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (isNaN(num) || num < 0 || num > 100) {
+                      e.target.value = String(cartData.discount);
+                      return;
+                    }
+                    onUpdateDiscount?.(e.target.value);
+                  }}
                   className="h-7 pr-5 text-xs tabular-nums"
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>

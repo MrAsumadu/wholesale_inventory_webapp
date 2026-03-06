@@ -454,13 +454,19 @@ export function NewOrderFlow({
                                   £
                                 </span>
                                 <Input
+                                  key={`price-${cartItem.itemId}-${cartItem.unitPrice}`}
                                   type="number"
                                   step="0.01"
                                   min="0"
-                                  value={cartItem.unitPrice}
-                                  onChange={(e) =>
-                                    updatePrice(cartItem.itemId, e.target.value)
-                                  }
+                                  defaultValue={cartItem.unitPrice}
+                                  onBlur={(e) => {
+                                    const num = parseFloat(e.target.value);
+                                    if (isNaN(num) || num < 0) {
+                                      e.target.value = String(cartItem.unitPrice);
+                                      return;
+                                    }
+                                    updatePrice(cartItem.itemId, e.target.value);
+                                  }}
                                   className="h-7 pl-5 text-xs tabular-nums"
                                 />
                               </div>
