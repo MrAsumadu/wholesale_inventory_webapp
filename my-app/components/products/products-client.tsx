@@ -40,6 +40,7 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
   const [showShopPicker, setShowShopPicker] = useState(false);
   const [showCreateShop, setShowCreateShop] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   useEffect(() => {
     if (editOrder?.line_items && editOrder.line_items.length > 0 && cart.length === 0) {
@@ -194,6 +195,33 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
         </div>
       )}
 
+      {/* Cancel order confirmation */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 animate-scale-fade-in">
+            <h2 className="font-display text-lg mb-2">Cancel Order?</h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              Are you sure? Your order will be discarded.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setShowCancelConfirm(false)}>
+                No, keep editing
+              </Button>
+              <Button
+                size="sm"
+                className="bg-destructive hover:bg-destructive/90"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  handleExitOrderMode();
+                }}
+              >
+                Yes, cancel order
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ShopFormModal open={showCreateShop} onClose={() => setShowCreateShop(false)} />
 
       <div className="p-4 md:p-8 max-w-[1400px] mx-auto animate-fade-in-up">
@@ -203,14 +231,6 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
           <h1 className="font-display text-2xl md:text-3xl text-foreground">
             {orderMode ? (editOrderId ? `Edit Order — ${shop?.name ?? ""}` : `Order — ${shop?.name ?? ""}`) : "Products"}
           </h1>
-          {orderMode && (
-            <button
-              onClick={handleExitOrderMode}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors mt-1"
-            >
-              Exit order mode
-            </button>
-          )}
         </div>
         {!orderMode && (
           <Button onClick={handleStartOrder} className="bg-primary hover:bg-primary/90">
@@ -310,12 +330,21 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
                   £{cartTotal.toFixed(2)}
                 </span>
               </div>
-              <Button
-                className="bg-primary hover:bg-primary/90"
-                onClick={() => setReviewOpen(true)}
-              >
-                Review Order
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="border-destructive text-destructive hover:bg-destructive/10"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => setReviewOpen(true)}
+                >
+                  Review Order
+                </Button>
+              </div>
             </div>
           </div>
         </div>
