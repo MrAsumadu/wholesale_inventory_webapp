@@ -44,7 +44,7 @@ export default function LoginPage() {
               </svg>
             </div>
             <span className="font-display text-lg font-semibold text-white/90 tracking-tight">
-              Shahjalal
+              Shahjalal Wholesale
             </span>
           </div>
 

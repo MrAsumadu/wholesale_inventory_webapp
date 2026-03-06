@@ -70,7 +70,7 @@ export function InvoiceModal({ open, onClose, order, shop }: InvoiceModalProps) 
                 <Package className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <p className="font-display text-lg">Shahjalal Inventory</p>
+                <p className="font-display text-lg">Shahjalal Wholesale</p>
                 <p className="text-xs text-muted-foreground">Invoice</p>
               </div>
             </div>

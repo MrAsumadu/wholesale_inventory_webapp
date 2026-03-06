@@ -36,7 +36,7 @@ export function Sidebar() {
         </div>
         {!collapsed && (
           <span className="font-display text-lg tracking-tight text-foreground truncate">
-            Shahjalal
+            Shahjalal Wholesale
           </span>
         )}
       </div>
