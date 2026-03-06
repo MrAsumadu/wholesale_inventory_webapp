@@ -1,44 +1,28 @@
 "use server";
 
-import { updateTag, unstable_cache } from "next/cache";
-import { cookies } from "next/headers";
-import { createClient, createClientFromCookies } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import type { InventoryItem, InventoryItemSlim } from "@/lib/types";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
-  const allCookies = (await cookies()).getAll();
-  return unstable_cache(
-    async (): Promise<InventoryItem[]> => {
-      const supabase = createClientFromCookies(allCookies);
-      const { data, error } = await supabase
-        .from("inventory_items")
-        .select("*")
-        .order("name");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inventory_items")
+    .select("*")
+    .order("name");
 
-      if (error) throw error;
-      return data ?? [];
-    },
-    ["inventory"],
-    { tags: ["inventory"] }
-  )();
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function getInventoryItemsSlim(): Promise<InventoryItemSlim[]> {
-  const allCookies = (await cookies()).getAll();
-  return unstable_cache(
-    async (): Promise<InventoryItemSlim[]> => {
-      const supabase = createClientFromCookies(allCookies);
-      const { data, error } = await supabase
-        .from("inventory_items")
-        .select("id, name, price, quantity, category_id")
-        .order("name");
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("inventory_items")
+    .select("id, name, price, quantity, category_id")
+    .order("name");
 
-      if (error) throw error;
-      return data ?? [];
-    },
-    ["inventory-slim"],
-    { tags: ["inventory"] }
-  )();
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function createItem(fields: {
@@ -63,7 +47,6 @@ export async function createItem(fields: {
     .select()
     .single();
 
-  updateTag("inventory");
   return { data, error };
 }
 
@@ -81,7 +64,6 @@ export async function updateItem(id: string, fields: Partial<{
     .update(fields)
     .eq("id", id);
 
-  updateTag("inventory");
   return { error };
 }
 
@@ -112,6 +94,5 @@ export async function deleteItem(id: string) {
     }
   }
 
-  updateTag("inventory");
   return { error };
 }

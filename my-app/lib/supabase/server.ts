@@ -26,24 +26,3 @@ export async function createClient() {
     }
   );
 }
-
-/**
- * Creates a Supabase client from pre-fetched cookies.
- * Use this inside unstable_cache where cookies() cannot be called directly.
- */
-export function createClientFromCookies(
-  allCookies: { name: string; value: string }[]
-) {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return allCookies;
-        },
-        setAll() {},
-      },
-    }
-  );
-}
