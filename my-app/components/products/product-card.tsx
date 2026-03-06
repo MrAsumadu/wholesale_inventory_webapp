@@ -156,7 +156,7 @@ export function ProductCard({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={cartData.unitPrice}
+                  value={+(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
                   onChange={(e) => onUpdatePrice?.(e.target.value)}
                   className="h-7 pl-5 text-xs tabular-nums"
                 />
