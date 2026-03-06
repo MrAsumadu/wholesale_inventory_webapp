@@ -98,7 +98,7 @@ export function generateOrderPdf({
     startY: yPos,
     head: [["Item", "Qty", "Unit Price", "Subtotal"]],
     body: tableBody,
-    theme: "striped",
+    theme: "grid",
     headStyles: {
       fillColor: [41, 37, 36],
       fontSize: 9,
