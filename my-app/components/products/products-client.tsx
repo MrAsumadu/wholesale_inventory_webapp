@@ -104,8 +104,6 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
     return sum + c.quantity * c.unitPrice * (1 - c.discount / 100);
   }, 0);
 
-  const cartItemCount = cart.reduce((sum, c) => sum + c.quantity, 0);
-
   const handleStartOrder = () => {
     if (shops.length === 1) {
       router.push(`/products?shop=${shops[0].id}&mode=order`);
