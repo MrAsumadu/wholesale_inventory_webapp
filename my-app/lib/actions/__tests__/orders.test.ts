@@ -5,22 +5,8 @@ const mockSupabase = {
   rpc: vi.fn(),
 };
 
-const mockCookies = [{ name: "sb-token", value: "test-token" }];
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockSupabase),
-  createClientFromCookies: vi.fn(() => mockSupabase),
-}));
-
-const mockUpdateTag = vi.fn();
-
-vi.mock("next/cache", () => ({
-  updateTag: mockUpdateTag,
-  unstable_cache: (fn: Function) => fn,
-}));
-
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ getAll: () => mockCookies })),
 }));
 
 beforeEach(() => {
@@ -147,7 +133,7 @@ describe("orders actions", () => {
     expect(result).toEqual({ s1: 5, s2: 3 });
   });
 
-  it("placeOrder calls rpc and invalidates all relevant tags", async () => {
+  it("placeOrder calls rpc with shop id and line items", async () => {
     mockSupabase.rpc.mockResolvedValue({ data: "new-order-id", error: null });
 
     const { placeOrder } = await import("../orders");
@@ -161,7 +147,6 @@ describe("orders actions", () => {
       p_line_items: lineItems,
     });
     expect(result).toEqual({ data: "new-order-id", error: null });
-    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
   });
 
   it("placeOrder returns error without throwing", async () => {
@@ -173,7 +158,7 @@ describe("orders actions", () => {
     expect(result.error).toEqual({ message: "rpc fail" });
   });
 
-  it("confirmOrder calls rpc and invalidates orders + inventory tags", async () => {
+  it("confirmOrder calls rpc with order id", async () => {
     mockSupabase.rpc.mockResolvedValue({ error: null });
 
     const { confirmOrder } = await import("../orders");
@@ -183,8 +168,6 @@ describe("orders actions", () => {
       p_order_id: "order-1",
     });
     expect(result).toEqual({ error: null });
-    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
-    expect(mockUpdateTag).toHaveBeenCalledWith("inventory");
   });
 
   it("confirmOrder returns error from rpc", async () => {
@@ -196,7 +179,7 @@ describe("orders actions", () => {
     expect(result.error).toEqual({ message: "already confirmed" });
   });
 
-  it("cancelOrder deletes pending order and invalidates orders tag", async () => {
+  it("cancelOrder deletes pending order", async () => {
     const mockEq2 = vi.fn().mockResolvedValue({ error: null, count: 1 });
     const mockEq1 = vi.fn().mockReturnValue({ eq: mockEq2 });
     const mockDelete = vi.fn().mockReturnValue({ eq: mockEq1 });
@@ -210,7 +193,6 @@ describe("orders actions", () => {
     expect(mockEq1).toHaveBeenCalledWith("id", "order-2");
     expect(mockEq2).toHaveBeenCalledWith("status", "pending");
     expect(result).toEqual({ error: null });
-    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
   });
 
   it("cancelOrder returns error when order not found or not pending", async () => {
@@ -251,7 +233,6 @@ describe("orders actions", () => {
       p_line_items: lineItems,
     });
     expect(result).toEqual({ error: null });
-    expect(mockUpdateTag).toHaveBeenCalledWith("orders");
   });
 
   it("updatePendingOrder returns error on failure", async () => {
