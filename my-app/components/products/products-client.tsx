@@ -120,10 +120,11 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
     if (isNaN(num) || num < 0) return;
     const item = items.find((i) => i.id === itemId);
     const catalogPrice = item?.price ?? num;
-    const discount = num < catalogPrice
+    const discount = num < catalogPrice && catalogPrice > 0
       ? +((1 - num / catalogPrice) * 100).toFixed(2)
       : 0;
-    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, discount } : c)));
+    const newUnitPrice = num >= catalogPrice ? num : catalogPrice;
+    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, unitPrice: newUnitPrice, discount } : c)));
   };
 
   const updateDiscount = (itemId: string, discount: string) => {
