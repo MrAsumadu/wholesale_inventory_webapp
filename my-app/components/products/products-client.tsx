@@ -49,13 +49,14 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
     return result;
   }, [items, search, activeCategory]);
 
+  const uncategorised: Category = { id: "__uncategorised__", name: "Uncategorised", image: "", created_at: "" };
+
   const groupedItems = useMemo(() => {
     const groups: { category: Category; items: InventoryItem[] }[] = [];
     const catMap = new Map(categories.map((c) => [c.id, c]));
 
     for (const item of filteredItems) {
-      const cat = catMap.get(item.category_id);
-      if (!cat) continue;
+      const cat = catMap.get(item.category_id) ?? uncategorised;
       let group = groups.find((g) => g.category.id === cat.id);
       if (!group) {
         group = { category: cat, items: [] };
