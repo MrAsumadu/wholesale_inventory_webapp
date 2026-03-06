@@ -45,6 +45,7 @@ export interface Order {
   id: string;
   shop_id: string;
   total: number;
+  status: "pending" | "completed";
   created_at: string;
   line_items?: OrderLineItem[];
 }
@@ -53,6 +54,7 @@ export interface RecentOrder {
   id: string;
   shop_id: string;
   total: number;
+  status: "pending" | "completed";
   created_at: string;
   line_items?: { id: string }[];
 }

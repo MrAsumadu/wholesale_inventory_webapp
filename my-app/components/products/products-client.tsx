@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, ShoppingBag, X } from "lucide-react";
+import { Search, ShoppingBag, X, Plus } from "lucide-react";
+import { ShopFormModal } from "@/components/shops/shop-form-modal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
 import { OrderReviewSheet } from "@/components/products/order-review-sheet";
-import type { InventoryItem, Category, Shop } from "@/lib/types";
+import type { InventoryItem, Category, Shop, Order } from "@/lib/types";
 
 interface CartItem {
   itemId: string;
@@ -20,14 +21,16 @@ interface ProductsClientProps {
   items: InventoryItem[];
   categories: Category[];
   shops: Shop[];
+  editOrder?: Order | null;
 }
 
-export function ProductsClient({ items, categories, shops }: ProductsClientProps) {
+export function ProductsClient({ items, categories, shops, editOrder }: ProductsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const shopId = searchParams.get("shop");
   const mode = searchParams.get("mode");
+  const editOrderId = searchParams.get("edit");
   const orderMode = mode === "order" && !!shopId;
   const shop = shops.find((s) => s.id === shopId) ?? null;
 
@@ -35,7 +38,21 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showShopPicker, setShowShopPicker] = useState(false);
+  const [showCreateShop, setShowCreateShop] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+
+  useEffect(() => {
+    if (editOrder?.line_items && editOrder.line_items.length > 0 && cart.length === 0) {
+      setCart(
+        editOrder.line_items.map((li) => ({
+          itemId: li.item_id,
+          quantity: li.quantity,
+          unitPrice: li.unit_price,
+          discount: 0,
+        }))
+      );
+    }
+  }, [editOrder]);
 
   const filteredItems = useMemo(() => {
     let result = items;
@@ -124,31 +141,8 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-[1400px] mx-auto animate-fade-in-up">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-display text-2xl md:text-3xl text-foreground">
-            {orderMode ? `Order — ${shop?.name ?? ""}` : "Products"}
-          </h1>
-          {orderMode && (
-            <button
-              onClick={handleExitOrderMode}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors mt-1"
-            >
-              Exit order mode
-            </button>
-          )}
-        </div>
-        {!orderMode && (
-          <Button onClick={handleStartOrder} className="bg-primary hover:bg-primary/90">
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Start Order
-          </Button>
-        )}
-      </div>
-
-      {/* Shop picker overlay */}
+    <>
+      {/* Shop picker overlay — outside animated container so fixed positioning works */}
       {showShopPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md mx-4 animate-scale-fade-in">
@@ -169,10 +163,43 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
                   <p className="text-xs text-muted-foreground">{s.location}</p>
                 </button>
               ))}
+              <button
+                onClick={() => setShowCreateShop(true)}
+                className="w-full p-3 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-muted/50 transition-colors flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="text-sm font-medium">Create New Shop</span>
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      <ShopFormModal open={showCreateShop} onClose={() => setShowCreateShop(false)} />
+
+      <div className="p-4 md:p-8 max-w-[1400px] mx-auto animate-fade-in-up">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl text-foreground">
+            {orderMode ? (editOrderId ? `Edit Order — ${shop?.name ?? ""}` : `Order — ${shop?.name ?? ""}`) : "Products"}
+          </h1>
+          {orderMode && (
+            <button
+              onClick={handleExitOrderMode}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors mt-1"
+            >
+              Exit order mode
+            </button>
+          )}
+        </div>
+        {!orderMode && (
+          <Button onClick={handleStartOrder} className="bg-primary hover:bg-primary/90">
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Start Order
+          </Button>
+        )}
+      </div>
 
       {/* Search + Category filters */}
       <div className="space-y-3 mb-6">
@@ -248,7 +275,9 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
         )}
       </div>
 
-      {/* Sticky bottom cart bar (order mode only) */}
+      </div>
+
+      {/* Sticky bottom cart bar — outside animated container so fixed positioning works */}
       {orderMode && cart.length > 0 && (
         <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 pb-safe">
           <div className="bg-card/95 backdrop-blur-md border-t border-border px-4 py-3">
@@ -281,12 +310,13 @@ export function ProductsClient({ items, categories, shops }: ProductsClientProps
           items={items}
           shop={shop}
           total={cartTotal}
+          editOrderId={editOrderId}
           onOrderPlaced={() => {
             setCart([]);
             router.push("/products");
           }}
         />
       )}
-    </div>
+    </>
   );
 }

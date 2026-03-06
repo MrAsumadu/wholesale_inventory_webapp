@@ -216,12 +216,15 @@ export function NewOrderFlow({
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-display text-xl mb-2">Order placed successfully</h3>
+            <h3 className="font-display text-xl mb-2">Order created</h3>
             <p className="text-muted-foreground text-sm mb-1">
               {itemCount} items totaling £{total.toFixed(2)}
             </p>
             <p className="text-muted-foreground/70 text-xs">
               Order for {shopName}
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              This order is pending. Confirm it in the Orders page to deduct stock.
             </p>
             <div className="flex gap-2 mt-6">
               <Button
@@ -277,9 +280,9 @@ export function NewOrderFlow({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 p-3 mt-4 rounded-lg border border-amber-300/50 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 text-sm">
+              <div className="flex items-center gap-2 p-3 mt-4 rounded-lg border border-blue-300/50 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 text-sm">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>This action cannot be undone. Stock will be deducted immediately.</span>
+                <span>This will create a pending order. Stock will be deducted when you confirm it in the Orders page.</span>
               </div>
             </div>
 
@@ -303,10 +306,10 @@ export function NewOrderFlow({
                   {isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Placing Order...
+                      Creating Order...
                     </>
                   ) : (
-                    "Place Order"
+                    "Create Order"
                   )}
                 </Button>
               </div>

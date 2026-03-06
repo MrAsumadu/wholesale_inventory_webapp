@@ -72,6 +72,11 @@ export function ProductCard({
             <ShoppingCart className="w-3.5 h-3.5 text-primary-foreground" />
           </div>
         )}
+        {orderMode && inCart && cartData && cartData.discount > 0 && (
+          <div className="absolute top-2 left-0 bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-r-md shadow-sm">
+            -{cartData.discount}% off
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -158,11 +163,36 @@ export function ProductCard({
               </div>
             </div>
 
-            {/* Subtotal */}
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium tabular-nums">£{discountedSubtotal.toFixed(2)}</span>
-            </div>
+            {/* Amazon-style discount display */}
+            {cartData.discount > 0 ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-600 text-white text-[11px] font-bold leading-none">
+                    -{cartData.discount}%
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums">
+                    £{(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-muted-foreground">Was:</span>
+                  <span className="text-[11px] text-muted-foreground tabular-nums line-through">
+                    £{cartData.unitPrice.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs pt-0.5 border-t border-border/50">
+                  <span className="text-muted-foreground">
+                    {cartData.quantity} × £{(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
+                  </span>
+                  <span className="font-semibold tabular-nums">£{discountedSubtotal.toFixed(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-medium tabular-nums">£{discountedSubtotal.toFixed(2)}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
