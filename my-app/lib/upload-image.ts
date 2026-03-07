@@ -5,13 +5,21 @@ const BUCKET = "images";
 const MAX_SIZE_MB = 0.2;
 const MAX_WIDTH = 1200;
 
+const COMPRESS_TIMEOUT_MS = 15_000;
+
 export async function compressImage(file: File): Promise<File> {
-  return imageCompression(file, {
+  const compression = imageCompression(file, {
     maxSizeMB: MAX_SIZE_MB,
     maxWidthOrHeight: MAX_WIDTH,
-    useWebWorker: true,
+    useWebWorker: false,
     fileType: "image/webp",
   });
+
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Compression timed out")), COMPRESS_TIMEOUT_MS)
+  );
+
+  return Promise.race([compression, timeout]);
 }
 
 export async function uploadImage(
@@ -19,14 +27,13 @@ export async function uploadImage(
   folder: "categories" | "inventory"
 ): Promise<string> {
   const supabase = createClient();
-  const compressed = await compressImage(file);
-  const ext = compressed.type === "image/webp" ? "webp" : "jpg";
+  const ext = file.type === "image/webp" ? "webp" : "jpg";
   const path = `${folder}/${crypto.randomUUID()}.${ext}`;
 
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(path, compressed, {
-      contentType: compressed.type,
+    .upload(path, file, {
+      contentType: file.type,
       upsert: false,
     });
 
