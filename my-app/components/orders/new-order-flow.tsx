@@ -199,7 +199,7 @@ export function NewOrderFlow({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="sm:max-w-[640px] max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-[640px] max-h-[calc(100vh-6rem)] md:max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             {confirmed
