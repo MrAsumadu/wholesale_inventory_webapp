@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, AlertTriangle, X } from "lucide-react";
+import { Plus, Search, AlertTriangle, X, Grid2x2 } from "lucide-react";
+import Link from "next/link";
 import { InventoryTable } from "@/components/inventory/inventory-table";
 import { ItemFormModal } from "@/components/inventory/item-form-modal";
 import type { InventoryItem, Category } from "@/lib/types";
@@ -95,6 +96,12 @@ export function InventoryClient({ items, categories }: InventoryClientProps) {
             ))}
           </SelectContent>
         </Select>
+        <Button variant="outline" asChild className="w-full sm:w-auto">
+          <Link href="/categories">
+            <Grid2x2 className="w-4 h-4 mr-2" />
+            Categories
+          </Link>
+        </Button>
       </div>
 
       {/* Table */}
