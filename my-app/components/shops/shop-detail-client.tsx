@@ -13,9 +13,19 @@ import {
   Navigation,
   Plus,
   Pencil,
+  Trash2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { OrderList } from "@/components/orders/order-list";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
+import { deleteShop } from "@/lib/actions/shops";
 import type { Shop, Order } from "@/lib/types";
 
 interface ShopDetailClientProps {
@@ -26,6 +36,21 @@ interface ShopDetailClientProps {
 export function ShopDetailClient({ shop, orders }: ShopDetailClientProps) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError("");
+    const { error } = await deleteShop(shop.id);
+    setDeleting(false);
+    if (error) {
+      setDeleteError(error.message || "Failed to delete shop. Please try again.");
+    } else {
+      router.push("/shops");
+    }
+  }
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(":");
@@ -73,6 +98,15 @@ export function ShopDetailClient({ shop, orders }: ShopDetailClientProps) {
           >
             <Pencil className="w-4 h-4 mr-1.5" />
             Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => { setDeleteOpen(true); setDeleteError(""); }}
+          >
+            <Trash2 className="w-4 h-4 mr-1.5" />
+            Delete
           </Button>
           <Button variant="outline" size="sm" onClick={handleCall}>
             <Phone className="w-4 h-4 mr-1.5" />
@@ -142,6 +176,28 @@ export function ShopDetailClient({ shop, orders }: ShopDetailClientProps) {
         onClose={() => setEditOpen(false)}
         shop={shop}
       />
+
+      <Dialog open={deleteOpen} onOpenChange={(v) => { if (!v) { setDeleteOpen(false); setDeleteError(""); } }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Delete Shop</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &ldquo;{shop.name}&rdquo;? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && (
+            <p className="text-sm text-destructive">{deleteError}</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeleteError(""); }}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
