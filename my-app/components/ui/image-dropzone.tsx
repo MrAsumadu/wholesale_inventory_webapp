@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Upload, X, Loader2 } from "lucide-react";
 import { compressImage } from "@/lib/upload-image";
@@ -20,6 +20,19 @@ export function ImageDropzone({
   const [compressing, setCompressing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    };
+  }, []);
+
+  const setPreviewUrl = useCallback((url: string | null) => {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = url;
+    setPreview(url);
+  }, []);
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -27,18 +40,16 @@ export function ImageDropzone({
       setCompressing(true);
       try {
         const compressed = await compressImage(file);
-        const url = URL.createObjectURL(compressed);
-        setPreview(url);
+        setPreviewUrl(URL.createObjectURL(compressed));
         onFileReady(compressed);
       } catch {
-        const url = URL.createObjectURL(file);
-        setPreview(url);
+        setPreviewUrl(URL.createObjectURL(file));
         onFileReady(file);
       } finally {
         setCompressing(false);
       }
     },
-    [onFileReady]
+    [onFileReady, setPreviewUrl]
   );
 
   const handleDrop = useCallback(
@@ -52,10 +63,10 @@ export function ImageDropzone({
   );
 
   const handleRemove = useCallback(() => {
-    setPreview(null);
+    setPreviewUrl(null);
     onFileReady(null);
     if (inputRef.current) inputRef.current.value = "";
-  }, [onFileReady]);
+  }, [onFileReady, setPreviewUrl]);
 
   const displayUrl =
     preview ||
