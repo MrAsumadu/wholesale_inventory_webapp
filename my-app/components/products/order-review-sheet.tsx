@@ -13,14 +13,7 @@ import {
 } from "lucide-react";
 import { placeOrder, updatePendingOrder } from "@/lib/actions/orders";
 import { generateOrderPdf } from "@/lib/generate-order-pdf";
-import type { InventoryItem, Shop } from "@/lib/types";
-
-interface CartItem {
-  itemId: string;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-}
+import type { InventoryItem, Shop, CartItem } from "@/lib/types";
 
 interface OrderReviewSheetProps {
   open: boolean;

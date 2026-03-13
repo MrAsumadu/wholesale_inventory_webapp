@@ -50,6 +50,19 @@ export interface Order {
   line_items?: OrderLineItem[];
 }
 
+export interface CartItem {
+  itemId: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+}
+
+export interface CartItemData {
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+}
+
 export interface RecentOrder {
   id: string;
   shop_id: string;
