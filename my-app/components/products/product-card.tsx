@@ -2,40 +2,23 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Minus, ShoppingCart } from "lucide-react";
-import type { InventoryItem, Category } from "@/lib/types";
-
-interface CartItemData {
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-}
+import { Plus, ShoppingCart } from "lucide-react";
+import type { InventoryItem, CartItemData } from "@/lib/types";
 
 interface ProductCardProps {
   item: InventoryItem;
-  category?: Category;
   orderMode: boolean;
   cartData?: CartItemData;
   onAddToCart?: () => void;
-  onUpdateQuantity?: (delta: number) => void;
-  onSetQuantity?: (quantity: number) => void;
-  onUpdatePrice?: (price: string) => void;
-  onUpdateDiscount?: (discount: string) => void;
-  onRemove?: () => void;
+  onOpenDetail?: () => void;
 }
 
 export function ProductCard({
   item,
-  category,
   orderMode,
   cartData,
   onAddToCart,
-  onUpdateQuantity,
-  onSetQuantity,
-  onUpdatePrice,
-  onUpdateDiscount,
-  onRemove,
+  onOpenDetail,
 }: ProductCardProps) {
   const outOfStock = item.quantity === 0;
   const inCart = !!cartData;
@@ -45,7 +28,16 @@ export function ProductCard({
 
   return (
     <div
-      className={`group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 ${
+      role="button"
+      tabIndex={0}
+      onClick={onOpenDetail}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpenDetail?.();
+        }
+      }}
+      className={`group relative rounded-xl border bg-card overflow-hidden transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
         inCart
           ? "border-primary/40 ring-1 ring-primary/20"
           : "border-border hover:border-border/80 hover:shadow-md"
@@ -93,137 +85,30 @@ export function ProductCard({
           </p>
         )}
 
-        {/* Order mode: add button */}
+        {/* Order mode: add button (quick-add without opening modal) */}
         {orderMode && !inCart && !outOfStock && (
           <Button
             size="sm"
             className="w-full mt-2 bg-primary hover:bg-primary/90"
-            onClick={onAddToCart}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart?.();
+            }}
           >
             <Plus className="w-4 h-4 mr-1" />
             Add
           </Button>
         )}
 
-        {/* Order mode: cart controls */}
+        {/* Order mode: compact cart summary */}
         {orderMode && inCart && cartData && (
-          <div className="mt-2 space-y-2">
-            {/* Quantity stepper */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7 compact-touch"
-                onClick={() => {
-                  if (cartData.quantity <= 1) {
-                    onRemove?.();
-                  } else {
-                    onUpdateQuantity?.(-1);
-                  }
-                }}
-              >
-                <Minus className="w-3 h-3" />
-              </Button>
-              <Input
-                key={`qty-${cartData.quantity}`}
-                type="number"
-                min="1"
-                max={item.quantity}
-                defaultValue={cartData.quantity}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  if (!isNaN(val) && val >= 1 && val <= item.quantity) {
-                    onSetQuantity?.(val);
-                  } else {
-                    e.target.value = String(cartData.quantity);
-                  }
-                }}
-                className="h-7 flex-1 text-center text-sm tabular-nums font-medium px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-7 w-7 compact-touch"
-                onClick={() => onUpdateQuantity?.(1)}
-                disabled={cartData.quantity >= item.quantity}
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
-            </div>
-
-            {/* Price + Discount inputs */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">£</span>
-                <Input
-                  key={`price-${cartData.unitPrice}-${cartData.discount}`}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={+(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
-                  onBlur={(e) => {
-                    const num = parseFloat(e.target.value);
-                    if (isNaN(num) || num < 0) {
-                      e.target.value = (cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2);
-                      return;
-                    }
-                    onUpdatePrice?.(e.target.value);
-                  }}
-                  className="h-7 pl-5 text-xs tabular-nums"
-                />
-              </div>
-              <div className="relative w-16">
-                <Input
-                  key={`disc-${cartData.discount}`}
-                  type="number"
-                  step="1"
-                  min="0"
-                  max="100"
-                  defaultValue={cartData.discount}
-                  onBlur={(e) => {
-                    const num = parseFloat(e.target.value);
-                    if (isNaN(num) || num < 0 || num > 100) {
-                      e.target.value = String(cartData.discount);
-                      return;
-                    }
-                    onUpdateDiscount?.(e.target.value);
-                  }}
-                  className="h-7 pr-5 text-xs tabular-nums"
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
-              </div>
-            </div>
-
-            {/* Amazon-style discount display */}
-            {cartData.discount > 0 ? (
-              <div className="space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-600 text-white text-[11px] font-bold leading-none">
-                    -{cartData.discount}%
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums">
-                    £{(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[11px] text-muted-foreground">Was:</span>
-                  <span className="text-[11px] text-muted-foreground tabular-nums line-through">
-                    £{cartData.unitPrice.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-xs pt-0.5 border-t border-border/50">
-                  <span className="text-muted-foreground">
-                    {cartData.quantity} × £{(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
-                  </span>
-                  <span className="font-semibold tabular-nums">£{discountedSubtotal.toFixed(2)}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium tabular-nums">£{discountedSubtotal.toFixed(2)}</span>
-              </div>
-            )}
+          <div className="mt-2 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground tabular-nums">
+              {cartData.quantity} x £{(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
+            </span>
+            <span className="font-semibold tabular-nums">
+              £{discountedSubtotal.toFixed(2)}
+            </span>
           </div>
         )}
       </div>

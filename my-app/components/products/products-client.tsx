@@ -8,14 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/products/product-card";
 import { OrderReviewSheet } from "@/components/products/order-review-sheet";
+import { ProductDetailModal } from "@/components/products/product-detail-modal";
+import { useCart } from "@/lib/hooks/use-cart";
 import type { InventoryItem, Category, Shop, Order } from "@/lib/types";
-
-interface CartItem {
-  itemId: string;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-}
 
 interface ProductsClientProps {
   items: InventoryItem[];
@@ -36,31 +31,32 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [showShopPicker, setShowShopPicker] = useState(false);
   const [showCreateShop, setShowCreateShop] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
+  const {
+    cart,
+    addToCart,
+    updateQuantity,
+    setQuantity,
+    updatePrice,
+    updateDiscount,
+    removeFromCart,
+    clearCart,
+    getCartItem,
+    cartTotal,
+    restoredShopId,
+  } = useCart(items, shops, editOrder, editOrderId, shopId);
+
+  // Restore order mode from localStorage
   useEffect(() => {
-    if (editOrder?.line_items && editOrder.line_items.length > 0 && cart.length === 0) {
-      setCart(
-        editOrder.line_items.map((li) => {
-          const catalogItem = items.find((i) => i.id === li.item_id);
-          const catalogPrice = catalogItem?.price ?? li.unit_price;
-          const discount = li.unit_price < catalogPrice
-            ? Math.round((1 - li.unit_price / catalogPrice) * 100)
-            : 0;
-          return {
-            itemId: li.item_id,
-            quantity: li.quantity,
-            unitPrice: catalogPrice,
-            discount,
-          };
-        })
-      );
+    if (restoredShopId && !orderMode) {
+      router.replace(`/products?shop=${restoredShopId}&mode=order`);
     }
-  }, [editOrder]);
+  }, [restoredShopId, orderMode, router]);
 
   const filteredItems = useMemo(() => {
     let result = items;
@@ -94,54 +90,6 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
     return groups;
   }, [filteredItems, categories]);
 
-  const getCartItem = (itemId: string) => cart.find((c) => c.itemId === itemId);
-
-  const addToCart = (item: InventoryItem) => {
-    if (cart.find((c) => c.itemId === item.id)) return;
-    setCart([...cart, { itemId: item.id, quantity: 1, unitPrice: item.price, discount: 0 }]);
-  };
-
-  const updateQuantity = (itemId: string, delta: number) => {
-    const item = items.find((i) => i.id === itemId);
-    setCart(cart.map((c) =>
-      c.itemId === itemId
-        ? { ...c, quantity: Math.max(1, Math.min(c.quantity + delta, item?.quantity ?? Infinity)) }
-        : c
-    ));
-  };
-
-  const setQuantity = (itemId: string, quantity: number) => {
-    const item = items.find((i) => i.id === itemId);
-    const clamped = Math.max(1, Math.min(quantity, item?.quantity ?? Infinity));
-    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, quantity: clamped } : c)));
-  };
-
-  const updatePrice = (itemId: string, price: string) => {
-    const num = parseFloat(price);
-    if (isNaN(num) || num < 0) return;
-    const item = items.find((i) => i.id === itemId);
-    const catalogPrice = item?.price ?? num;
-    const discount = num < catalogPrice && catalogPrice > 0
-      ? +((1 - num / catalogPrice) * 100).toFixed(2)
-      : 0;
-    const newUnitPrice = num >= catalogPrice ? num : catalogPrice;
-    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, unitPrice: newUnitPrice, discount } : c)));
-  };
-
-  const updateDiscount = (itemId: string, discount: string) => {
-    const num = parseFloat(discount);
-    if (isNaN(num) || num < 0 || num > 100) return;
-    setCart(cart.map((c) => (c.itemId === itemId ? { ...c, discount: num } : c)));
-  };
-
-  const removeFromCart = (itemId: string) => {
-    setCart(cart.filter((c) => c.itemId !== itemId));
-  };
-
-  const cartTotal = cart.reduce((sum, c) => {
-    return sum + c.quantity * c.unitPrice * (1 - c.discount / 100);
-  }, 0);
-
   const handleStartOrder = () => {
     if (shops.length === 1) {
       router.push(`/products?shop=${shops[0].id}&mode=order`);
@@ -156,9 +104,16 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
   };
 
   const handleExitOrderMode = () => {
-    setCart([]);
+    clearCart();
     router.push("/products");
   };
+
+  // Modal: find the selected item and its category
+  const selectedItem = selectedItemId ? items.find((i) => i.id === selectedItemId) ?? null : null;
+  const selectedCategory = selectedItem
+    ? categories.find((c) => c.id === selectedItem.category_id)
+    : undefined;
+  const selectedCartData = selectedItemId ? getCartItem(selectedItemId) : undefined;
 
   return (
     <>
@@ -292,15 +247,10 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
                   <ProductCard
                     key={item.id}
                     item={item}
-                    category={category}
                     orderMode={orderMode}
                     cartData={cd ? { quantity: cd.quantity, unitPrice: cd.unitPrice, discount: cd.discount } : undefined}
                     onAddToCart={() => addToCart(item)}
-                    onUpdateQuantity={(delta) => updateQuantity(item.id, delta)}
-                    onSetQuantity={(qty) => setQuantity(item.id, qty)}
-                    onUpdatePrice={(price) => updatePrice(item.id, price)}
-                    onUpdateDiscount={(discount) => updateDiscount(item.id, discount)}
-                    onRemove={() => removeFromCart(item.id)}
+                    onOpenDetail={() => setSelectedItemId(item.id)}
                   />
                 );
               })}
@@ -316,6 +266,33 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
       </div>
 
       </div>
+
+      {/* Product detail modal */}
+      <ProductDetailModal
+        item={selectedItem}
+        category={selectedCategory}
+        orderMode={orderMode}
+        cartData={selectedCartData ? { quantity: selectedCartData.quantity, unitPrice: selectedCartData.unitPrice, discount: selectedCartData.discount } : undefined}
+        onClose={() => setSelectedItemId(null)}
+        onAddToCart={() => {
+          if (selectedItem) addToCart(selectedItem);
+        }}
+        onUpdateQuantity={(delta) => {
+          if (selectedItemId) updateQuantity(selectedItemId, delta);
+        }}
+        onSetQuantity={(qty) => {
+          if (selectedItemId) setQuantity(selectedItemId, qty);
+        }}
+        onUpdatePrice={(price) => {
+          if (selectedItemId) updatePrice(selectedItemId, price);
+        }}
+        onUpdateDiscount={(discount) => {
+          if (selectedItemId) updateDiscount(selectedItemId, discount);
+        }}
+        onRemove={() => {
+          if (selectedItemId) removeFromCart(selectedItemId);
+        }}
+      />
 
       {/* Sticky bottom cart bar — outside animated container so fixed positioning works */}
       {orderMode && cart.length > 0 && (
@@ -361,7 +338,7 @@ export function ProductsClient({ items, categories, shops, editOrder }: Products
           total={cartTotal}
           editOrderId={editOrderId}
           onOrderPlaced={() => {
-            setCart([]);
+            clearCart();
             router.push("/products");
           }}
         />
