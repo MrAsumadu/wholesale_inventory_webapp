@@ -49,7 +49,7 @@ export function ProductCard({
           src={item.image || "/placeholder-item.svg"}
           alt={item.name}
           fill
-          unoptimized
+          sizes="(min-width: 1024px) 300px, (min-width: 640px) 33vw, 50vw"
           className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
             outOfStock ? "grayscale" : ""
           }`}
