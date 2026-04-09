@@ -76,7 +76,7 @@ export function ProductDetailModal({
                 src={item.image || "/placeholder-item.svg"}
                 alt={item.name}
                 fill
-                unoptimized
+                sizes="(min-width: 640px) 600px, 100vw"
                 className={`object-cover ${outOfStock ? "grayscale" : ""}`}
               />
               {outOfStock && (

@@ -127,6 +127,7 @@ export function InventoryTable({ items, categories, isFiltered }: InventoryTable
                         alt={item.name}
                         width={40}
                         height={40}
+                        sizes="40px"
                         className="object-cover"
                       />
                     </div>
