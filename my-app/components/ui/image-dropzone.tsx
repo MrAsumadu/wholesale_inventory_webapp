@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { Upload, X, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, AlertCircle } from "lucide-react";
 import { compressImage } from "@/lib/upload-image";
 
 interface ImageDropzoneProps {
@@ -18,6 +18,7 @@ export function ImageDropzone({
 }: ImageDropzoneProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
+  const [compressError, setCompressError] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<string | null>(null);
@@ -38,13 +39,16 @@ export function ImageDropzone({
     async (file: File) => {
       if (!file.type.startsWith("image/")) return;
       setCompressing(true);
+      setCompressError(false);
       try {
         const compressed = await compressImage(file);
         setPreviewUrl(URL.createObjectURL(compressed));
         onFileReady(compressed);
       } catch {
-        setPreviewUrl(URL.createObjectURL(file));
-        onFileReady(file);
+        setPreviewUrl(null);
+        onFileReady(null);
+        setCompressError(true);
+        if (inputRef.current) inputRef.current.value = "";
       } finally {
         setCompressing(false);
       }
@@ -114,6 +118,14 @@ export function ImageDropzone({
           <Loader2 className="w-8 h-8 animate-spin" />
           <span className="text-sm">Compressing...</span>
         </div>
+      ) : compressError ? (
+        <div className="flex flex-col items-center gap-2 text-destructive">
+          <AlertCircle className="w-8 h-8" />
+          <span className="text-sm font-medium">Compression failed</span>
+          <span className="text-xs text-muted-foreground">
+            Try a smaller image
+          </span>
+        </div>
       ) : displayUrl ? (
         <>
           <Image
@@ -142,7 +154,7 @@ export function ImageDropzone({
             Click or drag image to upload
           </span>
           <span className="text-xs text-muted-foreground/60">
-            PNG, JPG up to 5MB
+            PNG, JPG — auto-compressed
           </span>
         </div>
       )}
