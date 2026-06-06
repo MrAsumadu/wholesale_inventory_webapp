@@ -11,7 +11,7 @@ import {
   Loader2,
   FileDown,
 } from "lucide-react";
-import { placeOrder, updatePendingOrder } from "@/lib/actions/orders";
+import { placeOrder, updatePendingOrder } from "@/lib/data/orders";
 import { generateOrderPdf } from "@/lib/generate-order-pdf";
 import type { InventoryItem, Shop, CartItem } from "@/lib/types";
 

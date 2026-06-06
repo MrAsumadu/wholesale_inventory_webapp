@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
-import { uploadImage, deleteImage } from "@/lib/upload-image";
-import { createCategory, updateCategory } from "@/lib/actions/categories";
+import { uploadImage, deleteImage } from "@/lib/data/images";
+import { createCategory, updateCategory } from "@/lib/data/categories";
 import type { Category } from "@/lib/types";
 
 interface CategoryFormModalProps {

@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus } from "lucide-react";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
-import { uploadImage, deleteImage } from "@/lib/upload-image";
-import { createItem, updateItem } from "@/lib/actions/inventory";
-import { createCategory } from "@/lib/actions/categories";
+import { uploadImage, deleteImage } from "@/lib/data/images";
+import { createItem, updateItem } from "@/lib/data/inventory";
+import { createCategory } from "@/lib/data/categories";
 import type { InventoryItem, Category } from "@/lib/types";
 
 interface ItemFormModalProps {

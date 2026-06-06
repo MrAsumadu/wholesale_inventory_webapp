@@ -2,8 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { InventoryItem, InventoryItemSlim } from "@/lib/types";
+import { isDemoMode } from "@/lib/demo/config";
+import { buildSeed } from "@/lib/demo/seed";
 
 export async function getInventoryItems(): Promise<InventoryItem[]> {
+  if (isDemoMode()) return buildSeed().inventory_items;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")
@@ -15,6 +18,14 @@ export async function getInventoryItems(): Promise<InventoryItem[]> {
 }
 
 export async function getInventoryItemsSlim(): Promise<InventoryItemSlim[]> {
+  if (isDemoMode())
+    return buildSeed().inventory_items.map(({ id, name, price, quantity, category_id }) => ({
+      id,
+      name,
+      price,
+      quantity,
+      category_id,
+    }));
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory_items")

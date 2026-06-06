@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { createShop, updateShop } from "@/lib/actions/shops";
+import { createShop, updateShop } from "@/lib/data/shops";
 import type { Shop } from "@/lib/types";
 
 interface ShopFormModalProps {

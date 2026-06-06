@@ -2,8 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/types";
+import { isDemoMode } from "@/lib/demo/config";
+import { buildSeed } from "@/lib/demo/seed";
 
 export async function getCategories(): Promise<Category[]> {
+  if (isDemoMode()) return buildSeed().categories;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("categories")

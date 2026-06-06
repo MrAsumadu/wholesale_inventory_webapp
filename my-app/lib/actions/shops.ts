@@ -2,8 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { Shop } from "@/lib/types";
+import { isDemoMode } from "@/lib/demo/config";
+import { buildSeed } from "@/lib/demo/seed";
 
 export async function getShops(): Promise<Shop[]> {
+  if (isDemoMode()) return buildSeed().shops;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("shops")
@@ -15,6 +18,7 @@ export async function getShops(): Promise<Shop[]> {
 }
 
 export async function getShop(id: string): Promise<Shop | null> {
+  if (isDemoMode()) return buildSeed().shops.find((s) => s.id === id) ?? null;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("shops")

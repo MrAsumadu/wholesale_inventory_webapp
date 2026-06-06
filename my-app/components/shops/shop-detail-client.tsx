@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { OrderList } from "@/components/orders/order-list";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
-import { deleteShop } from "@/lib/actions/shops";
+import { deleteShop } from "@/lib/data/shops";
 import type { Shop, Order } from "@/lib/types";
 
 interface ShopDetailClientProps {

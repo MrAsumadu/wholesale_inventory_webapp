@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Pencil, Check, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import type { Order, Shop } from "@/lib/types";
 import { InvoiceModal } from "./invoice-modal";
-import { confirmOrder, cancelOrder } from "@/lib/actions/orders";
+import { confirmOrder, cancelOrder } from "@/lib/data/orders";
 
 interface OrderDetailProps {
   order: Order;

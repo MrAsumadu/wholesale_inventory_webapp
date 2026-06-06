@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { deleteItem } from "@/lib/actions/inventory";
+import { deleteItem } from "@/lib/data/inventory";
 import type { InventoryItem, Category } from "@/lib/types";
 import { ItemFormModal } from "./item-form-modal";
 

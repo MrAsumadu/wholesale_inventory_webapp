@@ -25,7 +25,7 @@ import {
   ArrowLeft,
   FileDown,
 } from "lucide-react";
-import { placeOrder } from "@/lib/actions/orders";
+import { placeOrder } from "@/lib/data/orders";
 import { generateOrderPdf } from "@/lib/generate-order-pdf";
 import type { InventoryItemSlim, Category } from "@/lib/types";
 

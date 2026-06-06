@@ -14,7 +14,7 @@ import {
 import { Plus } from "lucide-react";
 import { CategoryCard } from "@/components/categories/category-card";
 import { CategoryFormModal } from "@/components/categories/category-form-modal";
-import { deleteCategory } from "@/lib/actions/categories";
+import { deleteCategory } from "@/lib/data/categories";
 import type { Category } from "@/lib/types";
 
 interface CategoriesClientProps {

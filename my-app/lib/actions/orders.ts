@@ -2,8 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { Order, RecentOrder } from "@/lib/types";
+import { isDemoMode } from "@/lib/demo/config";
+import { buildSeed } from "@/lib/demo/seed";
 
 export async function getOrderById(orderId: string): Promise<Order | null> {
+  if (isDemoMode()) return buildSeed().orders.find((o) => o.id === orderId) ?? null;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
@@ -16,6 +19,7 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
 }
 
 export async function getOrders(limit = 100): Promise<Order[]> {
+  if (isDemoMode()) return buildSeed().orders.slice(0, limit);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
@@ -28,6 +32,18 @@ export async function getOrders(limit = 100): Promise<Order[]> {
 }
 
 export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
+  if (isDemoMode())
+    return [...buildSeed().orders]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit)
+      .map((o) => ({
+        id: o.id,
+        shop_id: o.shop_id,
+        total: o.total,
+        status: o.status,
+        created_at: o.created_at,
+        line_items: (o.line_items ?? []).map((li) => ({ id: li.id })),
+      }));
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
@@ -40,6 +56,10 @@ export async function getRecentOrders(limit = 5): Promise<RecentOrder[]> {
 }
 
 export async function getOrderStats(): Promise<{ count: number; totalRevenue: number }> {
+  if (isDemoMode()) {
+    const done = buildSeed().orders.filter((o) => o.status === "completed");
+    return { count: done.length, totalRevenue: done.reduce((t, o) => t + o.total, 0) };
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_order_stats");
 
@@ -51,6 +71,8 @@ export async function getOrderStats(): Promise<{ count: number; totalRevenue: nu
 }
 
 export async function getShopOrders(shopId: string, limit = 100): Promise<Order[]> {
+  if (isDemoMode())
+    return buildSeed().orders.filter((o) => o.shop_id === shopId).slice(0, limit);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("orders")
@@ -64,6 +86,13 @@ export async function getShopOrders(shopId: string, limit = 100): Promise<Order[
 }
 
 export async function getOrderCountsByShop(): Promise<Record<string, number>> {
+  if (isDemoMode()) {
+    const counts: Record<string, number> = {};
+    for (const o of buildSeed().orders) {
+      if (o.status === "completed") counts[o.shop_id] = (counts[o.shop_id] ?? 0) + 1;
+    }
+    return counts;
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_order_counts_by_shop");
 
