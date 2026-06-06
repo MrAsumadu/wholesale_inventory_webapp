@@ -11,6 +11,7 @@ import { OrderReviewSheet } from "@/components/products/order-review-sheet";
 import { ProductDetailModal } from "@/components/products/product-detail-modal";
 import { useCart } from "@/lib/hooks/use-cart";
 import type { InventoryItem, Category, Shop, Order } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface ProductsClientProps {
   items: InventoryItem[];
@@ -19,13 +20,20 @@ interface ProductsClientProps {
   editOrder?: Order | null;
 }
 
-export function ProductsClient({ items, categories, shops, editOrder }: ProductsClientProps) {
+export function ProductsClient({ items: itemsProp, categories: categoriesProp, shops: shopsProp, editOrder: editOrderProp }: ProductsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const demo = useDemoData();
+  const items = demo ? demo.inventory_items : itemsProp;
+  const categories = demo ? demo.categories : categoriesProp;
+  const shops = demo ? demo.shops : shopsProp;
 
   const shopId = searchParams.get("shop");
   const mode = searchParams.get("mode");
   const editOrderId = searchParams.get("edit");
+  const editOrder = demo && editOrderId
+    ? (demo.orders.find((o) => o.id === editOrderId) ?? null)
+    : editOrderProp;
   const orderMode = mode === "order" && !!shopId;
   const shop = shops.find((s) => s.id === shopId) ?? null;
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronRight, Package, Search } from "lucide-react";
 import { OrderDetail } from "@/components/orders/order-detail";
 import type { Order, Shop } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface OrdersClientProps {
   orders: Order[];
@@ -14,7 +15,11 @@ interface OrdersClientProps {
 
 type StatusFilter = "all" | "pending" | "completed";
 
-export function OrdersClient({ orders, shops }: OrdersClientProps) {
+export function OrdersClient({ orders: ordersProp, shops: shopsProp }: OrdersClientProps) {
+  const demo = useDemoData();
+  const orders = demo ? demo.orders : ordersProp;
+  const shops = demo ? demo.shops : shopsProp;
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");

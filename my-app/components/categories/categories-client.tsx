@@ -16,13 +16,23 @@ import { CategoryCard } from "@/components/categories/category-card";
 import { CategoryFormModal } from "@/components/categories/category-form-modal";
 import { deleteCategory } from "@/lib/data/categories";
 import type { Category } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface CategoriesClientProps {
   categories: Category[];
   itemCounts: Record<string, number>;
 }
 
-export function CategoriesClient({ categories, itemCounts }: CategoriesClientProps) {
+export function CategoriesClient({ categories: categoriesProp, itemCounts: itemCountsProp }: CategoriesClientProps) {
+  const demo = useDemoData();
+  const categories = demo ? demo.categories : categoriesProp;
+  const itemCounts = demo
+    ? demo.inventory_items.reduce<Record<string, number>>((acc, i) => {
+        acc[i.category_id] = (acc[i.category_id] ?? 0) + 1;
+        return acc;
+      }, {})
+    : itemCountsProp;
+
   const [addOpen, setAddOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [deleteCat, setDeleteCat] = useState<Category | null>(null);

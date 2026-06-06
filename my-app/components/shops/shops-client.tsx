@@ -6,13 +6,23 @@ import { Plus } from "lucide-react";
 import { ShopCard } from "@/components/shops/shop-card";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
 import type { Shop } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface ShopsClientProps {
   shops: Shop[];
   orderCounts: Record<string, number>;
 }
 
-export function ShopsClient({ shops, orderCounts }: ShopsClientProps) {
+export function ShopsClient({ shops: shopsProp, orderCounts: orderCountsProp }: ShopsClientProps) {
+  const demo = useDemoData();
+  const shops = demo ? demo.shops : shopsProp;
+  const orderCounts = demo
+    ? demo.orders.reduce<Record<string, number>>((acc, o) => {
+        if (o.status === "completed") acc[o.shop_id] = (acc[o.shop_id] ?? 0) + 1;
+        return acc;
+      }, {})
+    : orderCountsProp;
+
   const [addOpen, setAddOpen] = useState(false);
 
   return (

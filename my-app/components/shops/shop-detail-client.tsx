@@ -27,13 +27,18 @@ import { OrderList } from "@/components/orders/order-list";
 import { ShopFormModal } from "@/components/shops/shop-form-modal";
 import { deleteShop } from "@/lib/data/shops";
 import type { Shop, Order } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface ShopDetailClientProps {
   shop: Shop;
   orders: Order[];
 }
 
-export function ShopDetailClient({ shop, orders }: ShopDetailClientProps) {
+export function ShopDetailClient({ shop: shopProp, orders: ordersProp }: ShopDetailClientProps) {
+  const demo = useDemoData();
+  const shop = demo ? (demo.shops.find((s) => s.id === shopProp.id) ?? shopProp) : shopProp;
+  const orders = demo ? demo.orders.filter((o) => o.shop_id === shopProp.id) : ordersProp;
+
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);

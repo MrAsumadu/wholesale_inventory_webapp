@@ -15,13 +15,18 @@ import Link from "next/link";
 import { InventoryTable } from "@/components/inventory/inventory-table";
 import { ItemFormModal } from "@/components/inventory/item-form-modal";
 import type { InventoryItem, Category } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface InventoryClientProps {
   items: InventoryItem[];
   categories: Category[];
 }
 
-export function InventoryClient({ items, categories }: InventoryClientProps) {
+export function InventoryClient({ items: itemsProp, categories: categoriesProp }: InventoryClientProps) {
+  const demo = useDemoData();
+  const items = demo ? demo.inventory_items : itemsProp;
+  const categories = demo ? demo.categories : categoriesProp;
+
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);

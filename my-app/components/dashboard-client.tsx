@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { Category, InventoryItemSlim, Shop, RecentOrder } from "@/lib/types";
+import { useDemoData } from "@/lib/demo/use-demo-data";
 
 interface DashboardClientProps {
   categories: Category[];
@@ -23,12 +24,44 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({
-  categories,
-  inventoryItems,
-  shops,
-  recentOrders,
-  orderStats,
+  categories: categoriesProp,
+  inventoryItems: inventoryItemsProp,
+  shops: shopsProp,
+  recentOrders: recentOrdersProp,
+  orderStats: orderStatsProp,
 }: DashboardClientProps) {
+  const demo = useDemoData();
+  const categories = demo ? demo.categories : categoriesProp;
+  const inventoryItems = demo
+    ? demo.inventory_items.map(({ id, name, price, quantity, category_id }) => ({
+        id,
+        name,
+        price,
+        quantity,
+        category_id,
+      }))
+    : inventoryItemsProp;
+  const shops = demo ? demo.shops : shopsProp;
+  const recentOrders = demo
+    ? [...demo.orders]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5)
+        .map((o) => ({
+          id: o.id,
+          shop_id: o.shop_id,
+          total: o.total,
+          status: o.status,
+          created_at: o.created_at,
+          line_items: (o.line_items ?? []).map((li) => ({ id: li.id })),
+        }))
+    : recentOrdersProp;
+  const orderStats = demo
+    ? (() => {
+        const done = demo.orders.filter((o) => o.status === "completed");
+        return { count: done.length, totalRevenue: done.reduce((t, o) => t + o.total, 0) };
+      })()
+    : orderStatsProp;
+
   const totalItems = inventoryItems.length;
   const totalStock = inventoryItems.reduce((sum, i) => sum + i.quantity, 0);
   const lowStockItems = inventoryItems.filter((i) => i.quantity < 10);
