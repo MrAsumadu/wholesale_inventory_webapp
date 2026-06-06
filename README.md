@@ -26,6 +26,17 @@ host and cannot affect any real data.
 > with a Supabase backend and email/password login. Demo mode is toggled by a
 > single environment variable and is completely isolated from the real app.
 
+## Screenshots
+
+**Dashboard** — inventory, stock, revenue, and recent orders at a glance
+![Dashboard](my-app/public/screenshots/dashboard.png)
+
+**Inventory** — searchable catalogue with low‑stock alerts and expiry tracking
+![Inventory](my-app/public/screenshots/inventory.png)
+
+**Products & ordering** — browse by category and start an order
+![Products](my-app/public/screenshots/products.png)
+
 ## How it works
 
 1. **Stock the catalogue** — categories and inventory items (price, quantity,
