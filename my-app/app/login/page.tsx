@@ -1,7 +1,10 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { LoginForm } from "./login-form";
+import { isDemoMode } from "@/lib/demo/config";
 
 export default function LoginPage() {
+  if (isDemoMode()) redirect("/");
   return (
     <div className="min-h-dvh flex flex-col md:flex-row">
       {/* Left — Brand panel */}

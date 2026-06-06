@@ -1,7 +1,9 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { isDemoMode } from "@/lib/demo/config";
 
 export async function middleware(request: NextRequest) {
+  if (isDemoMode()) return NextResponse.next(); // no auth in demo mode
   return await updateSession(request);
 }
 
