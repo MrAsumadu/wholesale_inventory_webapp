@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Minus, Trash2 } from "lucide-react";
 import type { InventoryItem, Category, CartItemData } from "@/lib/types";
+import {
+  isValidDiscount,
+  isValidPrice,
+  isValidQuantityInput,
+} from "@/lib/products-logic";
 
 interface ProductDetailModalProps {
   item: InventoryItem | null;
@@ -154,7 +159,7 @@ export function ProductDetailModal({
                             defaultValue={cartData.quantity}
                             onBlur={(e) => {
                               const val = parseInt(e.target.value, 10);
-                              if (!isNaN(val) && val >= 1 && val <= item.quantity) {
+                              if (isValidQuantityInput(val, item.quantity)) {
                                 onSetQuantity?.(val);
                               } else {
                                 e.target.value = String(cartData.quantity);
@@ -191,8 +196,7 @@ export function ProductDetailModal({
                               min="0"
                               defaultValue={+(cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2)}
                               onBlur={(e) => {
-                                const num = parseFloat(e.target.value);
-                                if (isNaN(num) || num < 0) {
+                                if (!isValidPrice(e.target.value)) {
                                   e.target.value = (cartData.unitPrice * (1 - cartData.discount / 100)).toFixed(2);
                                   return;
                                 }
@@ -215,8 +219,7 @@ export function ProductDetailModal({
                               max="100"
                               defaultValue={cartData.discount}
                               onBlur={(e) => {
-                                const num = parseFloat(e.target.value);
-                                if (isNaN(num) || num < 0 || num > 100) {
+                                if (!isValidDiscount(e.target.value)) {
                                   e.target.value = String(cartData.discount);
                                   return;
                                 }

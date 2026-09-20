@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/products/product-card";
 import { OrderReviewSheet } from "@/components/products/order-review-sheet";
 import { ProductDetailModal } from "@/components/products/product-detail-modal";
 import { useCart } from "@/lib/hooks/use-cart";
+import { filterItems, groupItems } from "@/lib/products-logic";
 import type { InventoryItem, Category, Shop, Order } from "@/lib/types";
 import { useDemoData } from "@/lib/demo/use-demo-data";
 
@@ -66,37 +67,15 @@ export function ProductsClient({ items: itemsProp, categories: categoriesProp, s
     }
   }, [restoredShopId, orderMode, router]);
 
-  const filteredItems = useMemo(() => {
-    let result = items;
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter((item) => item.name.toLowerCase().includes(q));
-    }
-    if (activeCategory) {
-      result = result.filter((item) => item.category_id === activeCategory);
-    }
-    return result;
-  }, [items, search, activeCategory]);
+  const filteredItems = useMemo(
+    () => filterItems(items, search, activeCategory),
+    [items, search, activeCategory],
+  );
 
-  const uncategorised: Category = { id: "__uncategorised__", name: "Uncategorised", image: "", created_at: "" };
-
-  const groupedItems = useMemo(() => {
-    const groups: { category: Category; items: InventoryItem[] }[] = [];
-    const catMap = new Map(categories.map((c) => [c.id, c]));
-
-    for (const item of filteredItems) {
-      const cat = catMap.get(item.category_id) ?? uncategorised;
-      let group = groups.find((g) => g.category.id === cat.id);
-      if (!group) {
-        group = { category: cat, items: [] };
-        groups.push(group);
-      }
-      group.items.push(item);
-    }
-
-    groups.sort((a, b) => a.category.name.localeCompare(b.category.name));
-    return groups;
-  }, [filteredItems, categories]);
+  const groupedItems = useMemo(
+    () => groupItems(filteredItems, categories),
+    [filteredItems, categories],
+  );
 
   const handleStartOrder = () => {
     if (shops.length === 1) {

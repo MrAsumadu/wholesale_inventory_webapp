@@ -1,120 +1,19 @@
 import { describe, it, expect } from "vitest";
 import type { InventoryItem, Category } from "@/lib/types";
+import {
+  filterItems,
+  groupItems,
+  cartTotal,
+  updateQuantity,
+  isValidPrice,
+  isValidDiscount,
+  isValidQuantityInput,
+  backCalculateDiscount,
+  buildLineItems,
+} from "@/lib/products-logic";
 
-// These tests validate the pure business logic used in the products page.
-// The algorithms are extracted from products-client.tsx to test independently.
-
-// --- Filtering logic (from products-client.tsx filteredItems useMemo) ---
-
-function filterItems(
-  items: InventoryItem[],
-  search: string,
-  activeCategory: string | null
-): InventoryItem[] {
-  let result = items;
-  if (search) {
-    const q = search.toLowerCase();
-    result = result.filter((item) => item.name.toLowerCase().includes(q));
-  }
-  if (activeCategory) {
-    result = result.filter((item) => item.category_id === activeCategory);
-  }
-  return result;
-}
-
-// --- Grouping logic (from products-client.tsx groupedItems useMemo) ---
-
-const UNCATEGORISED: Category = { id: "__uncategorised__", name: "Uncategorised", image: "", created_at: "" };
-
-function groupItems(
-  filteredItems: InventoryItem[],
-  categories: Category[]
-): { category: Category; items: InventoryItem[] }[] {
-  const groups: { category: Category; items: InventoryItem[] }[] = [];
-  const catMap = new Map(categories.map((c) => [c.id, c]));
-
-  for (const item of filteredItems) {
-    const cat = catMap.get(item.category_id) ?? UNCATEGORISED;
-    let group = groups.find((g) => g.category.id === cat.id);
-    if (!group) {
-      group = { category: cat, items: [] };
-      groups.push(group);
-    }
-    group.items.push(item);
-  }
-
-  groups.sort((a, b) => a.category.name.localeCompare(b.category.name));
-  return groups;
-}
-
-// --- Cart logic (from products-client.tsx) ---
-
-interface CartItem {
-  itemId: string;
-  quantity: number;
-  unitPrice: number;
-  discount: number;
-}
-
-function cartTotal(cart: CartItem[]): number {
-  return cart.reduce((sum, c) => {
-    return sum + c.quantity * c.unitPrice * (1 - c.discount / 100);
-  }, 0);
-}
-
-function updateQuantity(
-  cart: CartItem[],
-  itemId: string,
-  delta: number,
-  maxQuantity: number
-): CartItem[] {
-  return cart.map((c) =>
-    c.itemId === itemId
-      ? { ...c, quantity: Math.max(1, Math.min(c.quantity + delta, maxQuantity)) }
-      : c
-  );
-}
-
-function isValidPrice(price: string): boolean {
-  const num = parseFloat(price);
-  return !(isNaN(num) || num < 0);
-}
-
-function isValidDiscount(discount: string): boolean {
-  const num = parseFloat(discount);
-  return !(isNaN(num) || num < 0 || num > 100);
-}
-
-function isValidQuantityInput(val: number, maxStock: number): boolean {
-  return !isNaN(val) && val >= 1 && val <= maxStock;
-}
-
-// --- Back-calculate discount from catalog price (from products-client.tsx edit order loading) ---
-
-function backCalculateDiscount(
-  storedUnitPrice: number,
-  catalogPrice: number | undefined
-): { unitPrice: number; discount: number } {
-  const price = catalogPrice ?? storedUnitPrice;
-  const discount = storedUnitPrice < price
-    ? Math.round((1 - storedUnitPrice / price) * 100)
-    : 0;
-  return { unitPrice: price, discount };
-}
-
-// --- Line items transformation (from order-review-sheet.tsx) ---
-
-function buildLineItems(
-  cart: CartItem[],
-  getItemName: (id: string) => string
-) {
-  return cart.map((c) => ({
-    item_id: c.itemId,
-    item_name: getItemName(c.itemId),
-    quantity: c.quantity,
-    unit_price: c.unitPrice * (1 - c.discount / 100),
-  }));
-}
+// These tests exercise the real functions used by the products page and cart,
+// imported from lib/products-logic.ts rather than redefined here.
 
 // --- Test fixtures ---
 

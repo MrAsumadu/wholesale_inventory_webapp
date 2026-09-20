@@ -1,60 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import type { CartItem, InventoryItem, Shop } from "@/lib/types";
+import type { SavedCart } from "@/lib/products-logic";
+import { restoreCart, buildSaveData, MAX_AGE_MS } from "@/lib/products-logic";
 
-// --- Extract the localStorage persistence logic as pure functions for testing ---
-// These mirror the logic in use-cart.ts
-
-const STORAGE_KEY = "wholesale-cart";
-const MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-interface SavedCart {
-  shopId: string;
-  items: CartItem[];
-  timestamp: number;
-}
-
-/**
- * Attempt to restore a cart from a raw localStorage string.
- * Returns { shopId, items } if valid, or null if invalid/expired/missing.
- */
-function restoreCart(
-  raw: string | null,
-  shops: Shop[],
-  inventoryItems: InventoryItem[],
-  now: number = Date.now(),
-): { shopId: string; items: CartItem[] } | null {
-  if (!raw) return null;
-
-  let saved: SavedCart;
-  try {
-    saved = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-
-  // Discard if too old
-  if (now - saved.timestamp > MAX_AGE_MS) return null;
-
-  // Discard if shop no longer exists
-  if (!shops.some((s) => s.id === saved.shopId)) return null;
-
-  // Filter out items that no longer exist in inventory
-  const validItems = saved.items.filter((ci) =>
-    inventoryItems.some((i) => i.id === ci.itemId),
-  );
-
-  if (validItems.length === 0) return null;
-
-  return { shopId: saved.shopId, items: validItems };
-}
-
-/**
- * Build the data to persist to localStorage.
- */
-function buildSaveData(shopId: string, cart: CartItem[]): string {
-  const data: SavedCart = { shopId, items: cart, timestamp: Date.now() };
-  return JSON.stringify(data);
-}
+// These tests exercise the real persistence helpers used by use-cart.ts,
+// imported from lib/products-logic.ts rather than redefined here.
 
 // --- Test fixtures ---
 

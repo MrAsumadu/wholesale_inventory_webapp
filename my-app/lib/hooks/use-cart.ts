@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { InventoryItem, Shop, Order, CartItem } from "@/lib/types";
-
-const STORAGE_KEY = "wholesale-cart";
-const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-interface SavedCart {
-  shopId: string;
-  items: CartItem[];
-  timestamp: number;
-}
+import {
+  STORAGE_KEY,
+  backCalculateDiscount,
+  buildSaveData,
+  cartTotal as computeCartTotal,
+  isValidDiscount,
+  isValidPrice,
+  restoreCart,
+  updateQuantity as applyQuantityChange,
+} from "@/lib/products-logic";
 
 export function useCart(
   inventoryItems: InventoryItem[],
@@ -33,15 +34,14 @@ export function useCart(
       setCart(
         editOrder.line_items.map((li) => {
           const catalogItem = inventoryItems.find((i) => i.id === li.item_id);
-          const catalogPrice = catalogItem?.price ?? li.unit_price;
-          const discount =
-            li.unit_price < catalogPrice
-              ? Math.round((1 - li.unit_price / catalogPrice) * 100)
-              : 0;
+          const { unitPrice, discount } = backCalculateDiscount(
+            li.unit_price,
+            catalogItem?.price,
+          );
           return {
             itemId: li.item_id,
             quantity: li.quantity,
-            unitPrice: catalogPrice,
+            unitPrice,
             discount,
           };
         }),
@@ -54,28 +54,10 @@ export function useCart(
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
 
-      const saved: SavedCart = JSON.parse(raw);
-
-      // Discard if too old
-      if (Date.now() - saved.timestamp > MAX_AGE_MS) {
-        localStorage.removeItem(STORAGE_KEY);
-        return;
-      }
-
-      // Discard if shop no longer exists
-      if (!shops.some((s) => s.id === saved.shopId)) {
-        localStorage.removeItem(STORAGE_KEY);
-        return;
-      }
-
-      // Filter out items that no longer exist in inventory
-      const validItems = saved.items.filter((ci) =>
-        inventoryItems.some((i) => i.id === ci.itemId),
-      );
-
-      if (validItems.length > 0) {
-        setCart(validItems);
-        setRestoredShopId(saved.shopId);
+      const restored = restoreCart(raw, shops, inventoryItems);
+      if (restored) {
+        setCart(restored.items);
+        setRestoredShopId(restored.shopId);
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
@@ -91,12 +73,7 @@ export function useCart(
     if (editOrderId) return;
 
     if (cart.length > 0 && shopId) {
-      const data: SavedCart = {
-        shopId,
-        items: cart,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, buildSaveData(shopId, cart));
     } else if (cart.length === 0) {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -125,17 +102,7 @@ export function useCart(
     (itemId: string, delta: number) => {
       const item = inventoryItems.find((i) => i.id === itemId);
       setCart((prev) =>
-        prev.map((c) =>
-          c.itemId === itemId
-            ? {
-                ...c,
-                quantity: Math.max(
-                  1,
-                  Math.min(c.quantity + delta, item?.quantity ?? Infinity),
-                ),
-              }
-            : c,
-        ),
+        applyQuantityChange(prev, itemId, delta, item?.quantity ?? Infinity),
       );
     },
     [inventoryItems],
@@ -154,8 +121,8 @@ export function useCart(
 
   const updatePrice = useCallback(
     (itemId: string, price: string) => {
+      if (!isValidPrice(price)) return;
       const num = parseFloat(price);
-      if (isNaN(num) || num < 0) return;
       const item = inventoryItems.find((i) => i.id === itemId);
       const catalogPrice = item?.price ?? num;
       const discount =
@@ -176,8 +143,8 @@ export function useCart(
 
   const updateDiscount = useCallback(
     (itemId: string, discount: string) => {
+      if (!isValidDiscount(discount)) return;
       const num = parseFloat(discount);
-      if (isNaN(num) || num < 0 || num > 100) return;
       setCart((prev) =>
         prev.map((c) => (c.itemId === itemId ? { ...c, discount: num } : c)),
       );
@@ -194,14 +161,7 @@ export function useCart(
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  const cartTotal = useMemo(
-    () =>
-      cart.reduce(
-        (sum, c) => sum + c.quantity * c.unitPrice * (1 - c.discount / 100),
-        0,
-      ),
-    [cart],
-  );
+  const cartTotal = useMemo(() => computeCartTotal(cart), [cart]);
 
   return {
     cart,
